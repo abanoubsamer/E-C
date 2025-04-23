@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Services\Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Mapping\Models\Commend\" />
+    <Folder Include="Mapping\Order\Commend\" />
+    <Folder Include="Mapping\Review\Queries\" />
+    <Folder Include="Mapping\Seller\Commend\" />
+    <Folder Include="Meditor\Card\Commend\Validation\" />
+    <Folder Include="Meditor\Category\Commend\Validation\" />
+    <Folder Include="Meditor\Mail\Quereis\" />
+    <Folder Include="Meditor\Order\Commend\Validation\" />
+    <Folder Include="Meditor\Product\Commend\Validation\" />
+    <Folder Include="Meditor\Reviews\Commend\Validation\" />
+    <Folder Include="Meditor\Seller\Commend\Validation\" />
+    <Folder Include="Meditor\User\Commend\Validation\" />
+  </ItemGroup>
+
+</Project>
