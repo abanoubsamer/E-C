@@ -16,18 +16,14 @@ using System.Text.Json;
 
 namespace E_Commerce.Controllers
 {
-  
     [ApiController]
     public class OrderController : BasicController
     {
-       
         private readonly ILogger<OrderController> _logger;
-        
+
         public OrderController(IMediator mediator, ILogger<OrderController> logger) : base(mediator)
         {
             _logger = logger;
-      
-     
         }
 
         [HttpGet]
@@ -38,12 +34,13 @@ namespace E_Commerce.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        //[Authorize]
         [Route(Routing.Order.GetUserOrders)]
         public async Task<IActionResult> GetUserOrders(string Id)
         {
             return NewResult(await _Mediator.Send(new GetUserOrdersModel(Id)));
         }
+
         [HttpGet]
         [Route(Routing.Order.GetSellerOrders)]
         public async Task<IActionResult> GetSellerOrders([FromQuery] OrderSellerPaginationModel Query)
@@ -51,8 +48,6 @@ namespace E_Commerce.Controllers
             return Ok(await _Mediator.Send(Query));
         }
 
-       
-      
         [HttpDelete]
         [Route(Routing.Order.Delete)]
         public async Task<IActionResult> Delete(string Id)
@@ -65,17 +60,14 @@ namespace E_Commerce.Controllers
         public async Task<IActionResult> Cancel(string Id)
         {
             return NewResult(await _Mediator.Send(new CancelOrdermodelCommend(Id)));
-
         }
+
         [HttpPut]
         [Route(Routing.Order.UpdateStatus)]
         public async Task<IActionResult> UpdateStatus(UpdateStatusOrderModelCommend model)
         {
             return NewResult(await _Mediator.Send(model));
-
         }
-
-
 
         [HttpPost]
         [Route(Routing.Order.ConfirmOrderPaymentWithAdd)]
@@ -87,14 +79,6 @@ namespace E_Commerce.Controllers
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             return NewResult(await _Mediator.Send(res));
-
-           
         }
-      
-      
-
-
-
-
     }
 }

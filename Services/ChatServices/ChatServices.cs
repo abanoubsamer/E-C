@@ -11,6 +11,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Services.Result;
 
 namespace Services.ChatServices
 {
@@ -81,8 +82,7 @@ namespace Services.ChatServices
             // تحضير الطلب بحيث يتم فهم المحادثة لكن يتم الرد فقط على آخر رسالة
             var requestData = new RequestData
             {
-                model = "qwen/qwen2.5-vl-72b-instruct:free",
-
+                model = "google/gemini-2.0-flash-exp:free",
                 messages = new List<Message>
                 {
                     new Message { role = "system", content = "This is the chat history for context, but only respond to the last message." }
@@ -154,6 +154,16 @@ namespace Services.ChatServices
                     yield return line;
                 }
             }
+        }
+
+        public async Task<ResultServices> NewChat(string userId)
+        {
+            _memoryCache.Remove(userId);
+            return new ResultServices
+            {
+                Succesd = true,
+                Msg = "New chat started."
+            };
         }
     }
 

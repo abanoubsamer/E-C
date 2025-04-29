@@ -10,17 +10,25 @@ using static Services.ChatServices.ChatServices;
 namespace E_Commerce.Controllers
 {
     [ApiController]
-
     public class ChatController : ControllerBase
     {
-
         private readonly IChatServices _chatService;
+
         public ChatController(IChatServices chatService)
         {
-           _chatService = chatService;
+            _chatService = chatService;
         }
 
         public record ChatRequest(string Message);
+
+        [HttpPost]
+        [Route(Routing.Chat.NewChat)]
+        public async Task<IActionResult> NewChat(string Id)
+        {
+            var Results = await _chatService.NewChat(Id);
+            if (Results.Succesd) return Ok();
+            return BadRequest();
+        }
 
         [HttpPost]
         [Route(Routing.Chat.SendMassage)]
@@ -38,8 +46,5 @@ namespace E_Commerce.Controllers
 
             return new EmptyResult();
         }
-
-
-      
     }
 }

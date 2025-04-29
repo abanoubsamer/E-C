@@ -116,7 +116,7 @@ namespace Core.Meditor.User.Queries.Handling
 
             if (!resultCheck.Succesd) return BadRequest<AuthResponseQueries>(resultCheck.Msg);
 
-            if (!resultCheck.User.EmailConfirmed) return Unauthorized<AuthResponseQueries>("Email Not Confirmed");
+            //if (!resultCheck.User.EmailConfirmed) return Unauthorized<AuthResponseQueries>("Email Not Confirmed");
 
             var AuthModel = await _authorizationService.GetTokenAsync(resultCheck.User);
 

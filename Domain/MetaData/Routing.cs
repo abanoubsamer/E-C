@@ -54,6 +54,7 @@ namespace Domain.MetaData
         {
             public const string Prefix = Role + "Chat/";
             public const string SendMassage = Prefix + "SendMassage";
+            public const string NewChat = Prefix + "NewChat/" + SingelId;
         }
 
         public static class ProductAnalytics

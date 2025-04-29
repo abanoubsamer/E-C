@@ -6,15 +6,13 @@ using MimeKit;
 using Services.Result;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Services.MailServices
 {
     public class MailServices : IMailServices
     {
-
         private readonly IOptions<EamilSettings> _options;
 
         public MailServices(IOptions<EamilSettings> options)
@@ -22,48 +20,65 @@ namespace Services.MailServices
             _options = options;
         }
 
-        public async Task<ResultServices> SendMail(string MailTo, string Subject, string body, IList<IFormFile> Attechment = null)
+        public async Task<ResultServices> SendMail(string mailTo, string subject, string htmlBody, IList<IFormFile> attachments = null)
         {
-            //sender
-            var email = new MimeMessage
-            {
-                Sender = MailboxAddress.Parse(_options.Value.Email),
-                Subject = Subject,
-            };
-            //resever
-            email.To.Add(MailboxAddress.Parse(MailTo));
+            var result = new ResultServices();
 
-            var builder = new BodyBuilder();
-
-            if (Attechment != null)
+            try
             {
-                byte[] filesbyte;
-                foreach (var file in Attechment)
+                // Create the email message
+                var email = new MimeMessage();
+
+                email.From.Add(new MailboxAddress(_options.Value.DisplayName, _options.Value.Email));
+                email.To.Add(MailboxAddress.Parse(mailTo));
+                email.Subject = subject;
+
+                // Add headers to make email look professional
+                email.Headers.Add("X-Priority", "1"); // High priority
+                email.Headers.Add("X-MSMail-Priority", "High");
+                email.Headers.Add("Importance", "High");
+                email.Headers.Add("Reply-To", _options.Value.Email);
+                email.Headers.Add("Return-Path", _options.Value.Email);
+                email.Headers.Add("X-Mailer", "Microsoft Outlook 16.0"); // Looks familiar to spam filters
+
+                var builder = new BodyBuilder
                 {
-                    if (file.Length > 0)
+                    HtmlBody = htmlBody,
+                    TextBody = "This is a multi-part message in MIME format. Please view it in HTML capable client." // fallback
+                };
+
+                // Attach files if any
+                if (attachments != null)
+                {
+                    foreach (var file in attachments)
                     {
-                        using var ms = new MemoryStream();
-                        file.CopyTo(ms);
-                        filesbyte = ms.ToArray();
-                        builder.Attachments.Add(file.FileName, filesbyte, ContentType.Parse(file.ContentType));
+                        if (file.Length > 0)
+                        {
+                            using var ms = new MemoryStream();
+                            await file.CopyToAsync(ms);
+                            builder.Attachments.Add(file.FileName, ms.ToArray(), ContentType.Parse(file.ContentType));
+                        }
                     }
                 }
+
+                email.Body = builder.ToMessageBody();
+
+                // Send the email
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(_options.Value.Host, _options.Value.Port, MailKit.Security.SecureSocketOptions.StartTls);
+                await smtp.AuthenticateAsync(_options.Value.Email, _options.Value.Password);
+                await smtp.SendAsync(email);
+                await smtp.DisconnectAsync(true);
+
+                result.Succesd = true;
             }
-            builder.HtmlBody = body;
-            email.Body = builder.ToMessageBody();
-            email.From.Add(new MailboxAddress(_options.Value.DisplayName, _options.Value.Email));
+            catch (Exception ex)
+            {
+                // Log the exception (you can improve this later to a logger)
+                result.Succesd = false;
+            }
 
-            //provider 
-            using var smtp = new SmtpClient();
-            smtp.Connect(_options.Value.Host, _options.Value.Port, MailKit.Security.SecureSocketOptions.StartTls);
-
-            smtp.Authenticate(_options.Value.Email, _options.Value.Password);
-
-            await smtp.SendAsync(email);
-
-             smtp.Disconnect(true);
-
-            return new ResultServices { Succesd = true };
+            return result;
         }
     }
 }
