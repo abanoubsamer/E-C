@@ -13,8 +13,8 @@ namespace Services.ProductAnalyticsServices
 {
     public class ProductAnalyticsServices : IProductAnalyticsServices
     {
-
         private readonly IUnitOfWork _unitOfWork;
+
         public ProductAnalyticsServices(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
@@ -28,7 +28,8 @@ namespace Services.ProductAnalyticsServices
                 await _unitOfWork.Repository<ProductInteraction>().AddAsync(entity);
                 return new ResultServices { Succesd = true };
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new ResultServices { Msg = ex.Message };
             }
         }
@@ -49,13 +50,12 @@ namespace Services.ProductAnalyticsServices
 
         public async Task<int> GetProductViews(string productId)
         {
-            return  _unitOfWork.Repository<ProductView>().GetQueryable().AsNoTracking().Count(v => v.ProductId == productId);
-        
+            return _unitOfWork.Repository<ProductView>().GetQueryable().AsNoTracking().Count(v => v.ProductId == productId);
         }
 
         public async Task<int> GetProductInteractions(string productId)
         {
-            return  _unitOfWork.Repository<ProductInteraction>().GetQueryable().AsNoTracking().Count(v => v.ProductId == productId);
+            return _unitOfWork.Repository<ProductInteraction>().GetQueryable().AsNoTracking().Count(v => v.ProductId == productId);
         }
 
         public async Task<int> GetSellerViews(string SellerId)
@@ -70,7 +70,7 @@ namespace Services.ProductAnalyticsServices
 
         public async Task<int> GetSellerPosts(string SellerId)
         {
-            return _unitOfWork.Repository<Domain.Models.Product>().GetQueryable().AsNoTracking().Count(x => x.SellerID == SellerId);
+            return _unitOfWork.Repository<Domain.Models.ProductListing>().GetQueryable().AsNoTracking().Count(x => x.SellerID == SellerId);
         }
 
         public async Task<int> GetSellerComments(string SellerId)

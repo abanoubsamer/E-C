@@ -80,5 +80,12 @@ namespace E_Commerce.Controllers
 
             return NewResult(await _Mediator.Send(res));
         }
+
+        [HttpPost]
+        [Route(Routing.Order.AddTest)]
+        public async Task<IActionResult> Add(AddOrderTestModel model)
+        {
+            return NewResult(await _Mediator.Send(model));
+        }
     }
 }

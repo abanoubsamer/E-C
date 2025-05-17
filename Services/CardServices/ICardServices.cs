@@ -12,10 +12,17 @@ namespace Services.CardServices
     public interface ICardServices
     {
         public Task<ResultServices> AddCardItems(CardItem entity);
+
         public Task<Card> GetCardItemsUser(string UserId);
-        public Task<ResultServices> UpdateCardItemsUser(CardItem entity);  
-        public Task<ResultServices> DeleteCardItemsUser(CardItem entity);  
+
+        public Task<ResultServices> UpdateCardItemsUser(CardItem entity);
+
+        public Task<ResultServices> DeleteCardItemsUser(CardItem entity);
+
+        public Task<ResultServices> DeleteCardItemsUser(string UserId);
+
         public Task<Card> HasCard(string UserId);
+
         public Task<CardItem> FindCardItemsById(string CardId);
     }
 }

@@ -12,26 +12,26 @@ namespace Services.CardServices
 {
     public class CardServices : ICardServices
     {
-
         #region Failds
-        private readonly IUnitOfWork _unitOfWork;
-        #endregion
 
+        private readonly IUnitOfWork _unitOfWork;
+
+        #endregion Failds
 
         #region Constractor
+
         public CardServices(IUnitOfWork unitOfWork)
         {
-            _unitOfWork = unitOfWork;   
+            _unitOfWork = unitOfWork;
         }
 
-      
-        #endregion
-
+        #endregion Constractor
 
         #region Implemntation
+
         public async Task<ResultServices> AddCardItems(CardItem entity)
         {
-            if(entity == null) return new ResultServices { Msg = "Invalid Card"};
+            if (entity == null) return new ResultServices { Msg = "Invalid Card" };
             try
             {
                 var exsit = await _unitOfWork.Repository<CardItem>().IsExistAsync(x => x.ProductID == entity.ProductID && x.CardId == entity.CardId);
@@ -39,27 +39,39 @@ namespace Services.CardServices
                 await _unitOfWork.Repository<CardItem>().AddAsync(entity);
                 return new ResultServices { Succesd = true };
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new ResultServices { Msg = ex.Message };
             }
-          
         }
 
         public async Task<ResultServices> DeleteCardItemsUser(CardItem entity)
         {
-            if(entity == null) return new ResultServices { Msg = " Invalid Card Item "};
+            if (entity == null) return new ResultServices { Msg = " Invalid Card Item " };
             try
             {
-            
                 await _unitOfWork.Repository<CardItem>().DeleteAsync(entity);
-                return new ResultServices { Succesd = true};
+                return new ResultServices { Succesd = true };
             }
-            catch (Exception ex) {
-                return new ResultServices { Msg = ex.Message};
-
+            catch (Exception ex)
+            {
+                return new ResultServices { Msg = ex.Message };
             }
+        }
 
+        public async Task<ResultServices> DeleteCardItemsUser(string UserId)
+        {
+            try
+            {
+                var card = await _unitOfWork.Repository<Card>().FindOneWithNoTrackingAsync(x => x.UserID == UserId);
 
+                await _unitOfWork.Repository<CardItem>().DeleteRangeAsync(card.Items);
+                return new ResultServices { Succesd = true };
+            }
+            catch (Exception ex)
+            {
+                return new ResultServices { Msg = ex.Message };
+            }
         }
 
         public async Task<CardItem> FindCardItemsById(string CardItmesId)
@@ -69,7 +81,7 @@ namespace Services.CardServices
 
         public async Task<Card> GetCardItemsUser(string UserId)
         {
-            return await _unitOfWork.Repository<Card>().FindOneWithNoTrackingAsync(x=>x.UserID == UserId);
+            return await _unitOfWork.Repository<Card>().FindOneWithNoTrackingAsync(x => x.UserID == UserId);
         }
 
         public async Task<Card> HasCard(string UserId)
@@ -84,14 +96,14 @@ namespace Services.CardServices
             try
             {
                 await _unitOfWork.Repository<CardItem>().UpdateAsync(entity);
-                return new ResultServices { Succesd = true};
-            }catch(Exception ex)
+                return new ResultServices { Succesd = true };
+            }
+            catch (Exception ex)
             {
                 return new ResultServices { Msg = ex.Message };
             }
         }
-        #endregion
 
-
+        #endregion Implemntation
     }
 }

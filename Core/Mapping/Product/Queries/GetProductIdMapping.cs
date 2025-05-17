@@ -11,21 +11,21 @@ namespace Core.Mapping.Product
 {
     public partial class ProductMapping
     {
-
-        public void GetProductIdMapping() {
-
-            CreateMap<Domain.Models.Product, GetProductByIdResponsesQueries>()
+        public void GetProductIdMapping()
+        {
+            CreateMap<Domain.Models.ProductListing, GetProductByIdResponsesQueries>()
                   .ForMember(des => des.ProductID, src => src.MapFrom(src => src.ProductID.ToString()))
                   .ForPath(des => des.Seller.id, src => src.MapFrom(src => src.Seller.SellerID.ToString()))
                   .ForPath(des => des.Seller.name, src => src.MapFrom(src => src.Seller.User.Name))
-                  .ForPath(des => des.Category.Id, src => src.MapFrom(src => src.Category.CategoryID.ToString()))
-                  .ForPath(des => des.Category.Name, src => src.MapFrom(src => src.Category.Name))
-                  .ForMember(des=> des.reviewDto , opt => opt.MapFrom(src=> src.Reviews.Select(rec=>  new ReviewDto { 
-                   ReviewID = rec.ReviewID.ToString(),
-                   Comment = rec.Comment,
-                   ReviewDate = rec.ReviewDate.ToShortDateString(),
-                   UserName = rec.User.Name,
-                   Rating = rec.Rating,
+              .ForPath(des => des.Category.Id, src => src.MapFrom(src => src.Product.Category.CategoryID.ToString()))
+                   .ForPath(des => des.Category.Name, src => src.MapFrom(src => src.Product.Category.Name))
+                  .ForMember(des => des.reviewDto, opt => opt.MapFrom(src => src.Reviews.Select(rec => new ReviewDto
+                  {
+                      ReviewID = rec.ReviewID.ToString(),
+                      Comment = rec.Comment,
+                      ReviewDate = rec.ReviewDate.ToShortDateString(),
+                      UserName = rec.User.Name,
+                      Rating = rec.Rating,
                   })))
                   .ForMember(dest => dest.Images, opt => opt.MapFrom(src =>
                       src.Images.Select(img => new ProductImagesDto
@@ -34,10 +34,6 @@ namespace Core.Mapping.Product
                           Image = img.ImageUrl
                       }).ToList()
                   ));
-               
-
-
         }
-
     }
 }

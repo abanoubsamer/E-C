@@ -1,4 +1,5 @@
-﻿using Domain.Dtos.Product.Queries;
+﻿using Domain;
+using Domain.Dtos.Product.Queries;
 using Domain.Models;
 using Infrastructure.UnitOfWork;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +14,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static Domain.MetaData.Routing;
 
 namespace Services.ProductServices
 {
@@ -22,7 +24,7 @@ namespace Services.ProductServices
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileServices _fileServices;
-    
+
         #endregion Failds
 
         #region Constractor
@@ -37,7 +39,7 @@ namespace Services.ProductServices
 
         #region Implemntation
 
-        public async Task<ResultServices> AddProductAsync(Product product, List<IFormFile> images)
+        public async Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, List<IFormFile> images)
         {
             if (product == null)
             {
@@ -47,6 +49,21 @@ namespace Services.ProductServices
                     Succesd = false
                 };
             }
+
+            var masterProduct = await _unitOfWork.Repository<ProductMaster>().FindOneAsync(p => p.SKU == product.SKU);
+            if (masterProduct == null)
+            {
+                masterProduct = new ProductMaster
+                {
+                    SKU = product.SKU,
+                    CategoryID = categoryID
+                };
+
+                // إضافة الـ ProductMaster إلى قاعدة البيانات
+                await _unitOfWork.Repository<ProductMaster>().AddAsync(masterProduct);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            product.Product = masterProduct;
 
             using var transaction = await _unitOfWork.BeginTransactionAsync();
             var uploadResult = new FileSystemResult();
@@ -64,16 +81,17 @@ namespace Services.ProductServices
                 }
                 else return uploadResult;
 
-                await _unitOfWork.Repository<Product>().AddAsync(product);
+                product.ProductID = Guid.NewGuid().ToString();
+                await _unitOfWork.Repository<ProductListing>().AddAsync(product);
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommentAsync();
 
                 return new ResultServices
                 {
-                    Succesd = true
+                    Succesd = true,
+                    Msg = product.ProductID
                 };
             }
-
             catch (Exception ex)
             {
                 await _unitOfWork.RollBackAsync();
@@ -94,7 +112,7 @@ namespace Services.ProductServices
             using var transaction = await _unitOfWork.BeginTransactionAsync(); // Ensure transaction is used here
             try
             {
-                var prod = await _unitOfWork.Repository<Product>().FindOneWithNoTrackingAsync(x => x.ProductID == Id);
+                var prod = await _unitOfWork.Repository<ProductListing>().FindOneWithNoTrackingAsync(x => x.ProductID == Id);
                 if (prod == null)
                     return new ResultServices() { Succesd = false, Msg = "Product Not Found" };
 
@@ -106,7 +124,7 @@ namespace Services.ProductServices
                 }
                 await _unitOfWork.Repository<ProductImages>().DeleteRangeAsync(prod.Images);
 
-                await _unitOfWork.Repository<Product>().DeleteAsync(prod);
+                await _unitOfWork.Repository<ProductListing>().DeleteAsync(prod);
 
                 if (imageUrls.Any())
                 {
@@ -130,17 +148,17 @@ namespace Services.ProductServices
             }
         }
 
-        public async Task<List<Product>> GetAllProductAsync()
+        public async Task<List<ProductListing>> GetAllProductAsync()
         {
-            return await _unitOfWork.Repository<Product>().GetAllAsyncWithNoTracking();
+            return await _unitOfWork.Repository<ProductListing>().GetAllAsyncWithNoTracking();
         }
 
-        public async Task<Product> GetProductByID(string Id)
+        public async Task<ProductListing> GetProductByID(string Id)
         {
-            return await _unitOfWork.Repository<Product>().FindOneAsync(x => x.ProductID == Id);
+            return await _unitOfWork.Repository<ProductListing>().FindOneAsync(x => x.ProductID == Id);
         }
 
-        public async Task<ResultServices> UpdateProductAsync(Product product, List<IFormFile>? Images, List<string>? IdImagesDeltetd)
+        public async Task<ResultServices> UpdateProductAsync(ProductListing product, List<IFormFile>? Images, List<string>? IdImagesDeltetd)
         {
             if (product == null)
                 return new ResultServices() { Msg = "Product Is Null" };
@@ -191,7 +209,7 @@ namespace Services.ProductServices
                     await _unitOfWork.Repository<ProductImages>().AddRangeAsync(imagesToAdd);
                 }
 
-                await _unitOfWork.Repository<Product>().UpdateAsync(product);
+                await _unitOfWork.Repository<ProductListing>().UpdateAsync(product);
                 await _unitOfWork.SaveChangesAsync();
 
                 await _unitOfWork.CommentAsync();
@@ -235,13 +253,13 @@ namespace Services.ProductServices
 
         private IQueryable<GetProducPaginationResponse> GetQueryable()
         {
-            return _unitOfWork.Repository<Product>()
+            return _unitOfWork.Repository<ProductListing>()
              .GetQueryable().AsNoTracking().AsSplitQuery()
              .Select(x => new GetProducPaginationResponse
              {
                  AverageRating = x.Reviews.Select(r => (double?)r.Rating).Average() ?? 0,
                  Description = x.Description,
-                 Category = new Domain.Dtos.CategoryDto { Name = x.Category.CategoryID, Id = x.CategoryID },
+                 Category = new Domain.Dtos.CategoryDto { Name = x.Product.Category.Name, Id = x.Product.CategoryID },
                  Name = x.Name,
                  Price = x.Price,
                  ProductID = x.ProductID,
@@ -252,8 +270,8 @@ namespace Services.ProductServices
                      id = x.ImageID,
                      Image = x.ImageUrl
                  }).ToList(),
-                 ModelCompatibility = x.ModelCompatibilities.Select(x => x.ModelId).ToList(),
-                 BrandCompatibility = x.ModelCompatibilities.Select(x => x.Model.BrandId).Distinct().ToList()
+                 ModelCompatibility = x.Product.Compatibilities.Select(x => x.ModelId).ToList(),
+                 BrandCompatibility = x.Product.Compatibilities.Select(x => x.Model.BrandId).Distinct().ToList()
              });
         }
 
@@ -283,9 +301,16 @@ namespace Services.ProductServices
 
         public async Task<decimal> GetProductPriceByID(string Id)
         {
-            var product = await _unitOfWork.Repository<Product>().FindOneWithNoTrackingAsync(x => x.ProductID == Id);
+            var product = await _unitOfWork.Repository<ProductListing>().FindOneWithNoTrackingAsync(x => x.ProductID == Id);
 
             return product.Price;
+        }
+
+        public async Task<List<ProductMasterDto>> GetMasterProduct(string SKU)
+        {
+            var master = await _unitOfWork.Repository<ProductMaster>().FindMoreAsNoTrackingAsync(x => x.SKU.Contains(SKU));
+            if (master == null) return new List<ProductMasterDto>();
+            return master.Select(e => new ProductMasterDto { CategoryID = e.CategoryID, SKU = e.SKU }).ToList();
         }
 
         #endregion Implemntation

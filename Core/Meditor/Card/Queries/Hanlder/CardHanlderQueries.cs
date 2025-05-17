@@ -19,23 +19,23 @@ namespace Core.Meditor.Card.Queries.Hanlder
     {
         private readonly ICardServices cardServices;
 
-        #region Fialds
 
-        #endregion
 
         #region Constracotr
+
         public CardHanlderQueries(ICardServices cardServices)
         {
             this.cardServices = cardServices;
         }
-        #endregion
 
+        #endregion Constracotr
 
         #region Hnalder
+
         public async Task<Response<GetCardUserRespones>> Handle(GetCardUserModelQueries request, CancellationToken cancellationToken)
         {
             var card = await cardServices.GetCardItemsUser(request._id);
-            
+
             if (card == null) return NotFound<GetCardUserRespones>("Not Found Card");
 
             var cardMapping = new GetCardUserRespones
@@ -46,28 +46,28 @@ namespace Core.Meditor.Card.Queries.Hanlder
                     Id = x.Id,
                     Price = x.Price,
                     Quantity = x.Quantity,
-                    Product = new GetProductDto 
-                    {ProductID = x.Product.ProductID
-                    ,AverageRating = x.Product.AverageRating,
-                    Description = x.Product.Description,
-                    Name = x.Product.Name,
-                    Price = x.Price,
-                    Category = new CategoryDto { Id = x.Product.Category.CategoryID,Name = x.Product.Category.Name},
-                    ImagesDto = x.Product.Images.Select(x=>
-                    new ProductImagesDto
+                    Product = new GetProductDto
                     {
-                        id = x.ImageID,
-                        Image = x.ImageUrl,
-                    }).ToList(),
-                    
+                        ProductID = x.Product.ProductID
+                    ,
+                        AverageRating = x.Product.AverageRating,
+                        Description = x.Product.Description,
+                        Name = x.Product.Name,
+                        Price = x.Price,
+                        Category = new CategoryDto { Id = x.Product.Product.Category.CategoryID, Name = x.Product.Product.Category.Name },
+                        ImagesDto = x.Product.Images.Select(x =>
+                        new ProductImagesDto
+                        {
+                            id = x.ImageID,
+                            Image = x.ImageUrl,
+                        }).ToList(),
                     }
                 }).ToList()
             };
 
             return Success(cardMapping);
-
         }
-        #endregion
 
+        #endregion Hnalder
     }
 }

@@ -12,18 +12,21 @@ namespace Domain.Models
     public class OrderItem
     {
         [Required]
-        public string OrderID { get; set; }  
+        public string OrderID { get; set; }
+
         public virtual Order Order { get; set; }
 
         [Required]
         public string ProductID { get; set; }
-        public virtual Product Product { get; set; }
+
+        public virtual ProductListing Product { get; set; }
 
         [Required]
         public OrderItemStatus Status { get; set; }
 
         [Required]
         public string SellerID { get; set; }
+
         [ForeignKey(nameof(SellerID))]
         public virtual Seller Seller { get; set; }
 
@@ -34,5 +37,4 @@ namespace Domain.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
     }
-
 }

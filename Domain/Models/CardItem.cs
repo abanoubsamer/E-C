@@ -13,22 +13,23 @@ namespace Domain.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string Id { get; set; }
-      
+
         [Required]
         public string ProductID { get; set; }
+
         [ForeignKey(nameof(ProductID))]
-        public virtual Product Product { get; set; }
+        public virtual ProductListing Product { get; set; }
 
         public string CardId { get; set; }
-        [ForeignKey(nameof(CardId))] 
+
+        [ForeignKey(nameof(CardId))]
         public virtual Card Card { get; set; }
-        
+
         [Required]
         public int Quantity { get; set; }
-       
+
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; } 
+        public decimal Price { get; set; }
     }
-
 }

@@ -17,26 +17,28 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
-
 namespace Services.OderServices
 {
     public class OrderServices : IOrderServices
     {
-
         #region Fialds
+
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentServices _paymentService;
         private readonly IOptions<JwtOptions> _jwtOptions;
-        #endregion
+
+        #endregion Fialds
 
         #region Constractor
+
         public OrderServices(IUnitOfWork unitOfWork, IOptions<JwtOptions> jwtOptions, IPaymentServices paymentService)
         {
             _jwtOptions = jwtOptions;
             _paymentService = paymentService;
             _unitOfWork = unitOfWork;
         }
-        #endregion
+
+        #endregion Constractor
 
         #region Implemntation
 
@@ -47,18 +49,17 @@ namespace Services.OderServices
             try
             {
                 await _unitOfWork.Repository<Order>().AddAsync(entity);
-                return new ResultServices { Succesd= true };
+                return new ResultServices { Succesd = true };
             }
             catch (Exception ex)
             {
                 return new ResultServices { Msg = ex.Message };
-
             }
         }
 
-        public Expression<Func<T, TResponse>> expression<T,TResponse>(Func<T, TResponse> func)
+        public Expression<Func<T, TResponse>> expression<T, TResponse>(Func<T, TResponse> func)
         {
-           return x => func(x);
+            return x => func(x);
         }
 
         public async Task<Order> GetOrderById(string id)
@@ -66,27 +67,35 @@ namespace Services.OderServices
             return await _unitOfWork.Repository<Order>().FindOneAsync(x => x.OrderID == id);
         }
 
-        public async Task<ResultServices> UpdateStatusOrder(string OrderId,string productId, OrderItemStatus Status)
+        public async Task<decimal> GetTotalAmountProduct(string ProductId, int Quantity)
+        {
+            var product = await _unitOfWork.Repository<Domain.Models.ProductListing>().FindOneAsync(x => x.ProductID == ProductId);
+            return product.Price * Quantity;
+        }
+
+        public async Task<ResultServices> UpdateStatusOrder(string OrderId, string productId, OrderItemStatus Status)
         {
             if (OrderId == null) return new ResultServices { Msg = "Invalid OrderId" };
 
             try
             {
                 var order = await _unitOfWork.Repository<OrderItem>().FindOneAsync(x => x.OrderID == OrderId && x.ProductID == productId); ;
-                
+
                 if (order == null) return new ResultServices { Msg = $"Not Found Order With Id {OrderId}" };
-                
-                  order.Status = Status ;
-                
+
+                order.Status = Status;
+
                 await _unitOfWork.Repository<OrderItem>().UpdateAsync(order);
                 return new ResultServices { Succesd = true };
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new ResultServices { Msg = ex.Message };
             }
         }
 
         #region User
+
         public async Task<ResultServices> CancelOrder(string Id)
         {
             if (Id.IsNullOrEmpty()) return new ResultServices { Msg = "Invalid Id " };
@@ -99,7 +108,6 @@ namespace Services.OderServices
                 //order.Status = OrderStatus.Cancelled;
                 await _unitOfWork.Repository<Order>().UpdateAsync(order);
                 return new ResultServices { Succesd = true };
-
             }
             catch (Exception ex)
             {
@@ -107,17 +115,17 @@ namespace Services.OderServices
             }
         }
 
-
         public async Task<OrderWithTokenResult> GetOrderWithJWT(Order entity)
         {
             var JwtOrderResult = new OrderWithTokenResult();
             //1
-            if (entity == null) {
+            if (entity == null)
+            {
                 JwtOrderResult.IsAuthenticated = false;
                 JwtOrderResult.Messgage = "invalid Order";
                 return JwtOrderResult;
             }
-            //2 
+            //2
             // Create Claims
             var Claim = await GetClaimOrder(entity);
             var NewClaims = new List<Claim>()
@@ -127,7 +135,7 @@ namespace Services.OderServices
                 {
                     OrderDate =entity.OrderDate,
                     OrderID = entity.OrderID,
-                    OrderItems = entity.OrderItems.Select(x=>new OrderItem { 
+                    OrderItems = entity.OrderItems.Select(x=>new OrderItem {
                     Price = x.Price,
                     ProductID = x.ProductID,
                     SellerID = x.Product.SellerID,
@@ -137,8 +145,7 @@ namespace Services.OderServices
                     UserID = entity.UserID,
                     AddressId = entity.AddressId,
                     PhoneId = entity.PhoneId,
-                  
-                   
+
                     TotalAmount = entity.TotalAmount,
                 })),
             };
@@ -167,23 +174,20 @@ namespace Services.OderServices
             var tokenhandler = new JwtSecurityTokenHandler();
 
             return tokenhandler.CreateToken(TokenDecrpotr);
-
-
         }
 
         private async Task<GetOrderClaimsResult> GetClaimOrder(Order entity)
         {
             if (entity == null || !entity.OrderItems.Any())
 
-            return new GetOrderClaimsResult { Msg = "Invalid Order" };
-           
+                return new GetOrderClaimsResult { Msg = "Invalid Order" };
+
             try
             {
                 var productIds = entity.OrderItems.Select(x => x.ProductID).ToList();
-                var products = await _unitOfWork.Repository<Domain.Models.Product>().FindMoreAsync(x => productIds.Contains(x.ProductID));
+                var products = await _unitOfWork.Repository<Domain.Models.ProductListing>().FindMoreAsync(x => productIds.Contains(x.ProductID));
                 if (!products.Any())
                     return new GetOrderClaimsResult { Msg = "Invalid Order" };
-
 
                 foreach (var orderItem in entity.OrderItems)
                 {
@@ -196,29 +200,25 @@ namespace Services.OderServices
                 }
 
                 entity.TotalAmount = entity.OrderItems.Sum(x => x.Price * x.Quantity);
-               
 
                 return new GetOrderClaimsResult
                 { Succesd = true, Order = entity };
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return new GetOrderClaimsResult { Msg = ex.Message };
             }
-   
-
         }
-
 
         public async Task<List<Order>> GetUserOrders(string Userid)
         {
-            return await _unitOfWork.Repository<Order>().FindMoreAsync(x => x.UserID == Userid );
+            return await _unitOfWork.Repository<Order>().FindMoreAsync(x => x.UserID == Userid);
         }
 
-        #endregion
-
-
+        #endregion User
 
         #region Admin
+
         public IQueryable<Order> FilterOrder(
          string? OrderId,
          string? ProductID,
@@ -241,10 +241,11 @@ namespace Services.OderServices
             if (!TransactionID.IsNullOrEmpty()) Query = Query.Where(x => x.Payment.TransactionID.Contains(TransactionID));
             if (!PaymentMethod.IsNullOrEmpty()) Query = Query.Where(x => x.Payment.PaymentMethod.Contains(PaymentMethod));
 
-            // order 
+            // order
 
             return orderByAdmin(Query, orederBy, orderOredringEnum);
         }
+
         private IQueryable<Order> GetOrderQuerybleAdmin()
         {
             return _unitOfWork.Repository<Order>()
@@ -252,32 +253,31 @@ namespace Services.OderServices
                    .Include(x => x.User)
                    .Include(x => x.OrderItems)
                    .Include(x => x.Payment);
-
         }
 
         private IQueryable<Order> orderByAdmin(IQueryable<Order> orders, OrederBy? orederBy,
          OrderOredringEnum? orderOredringEnum)
         {
-            // init 
+            // init
             bool Asinding = orederBy == 0 || orederBy == null;
             orderOredringEnum ??= 0;
-
 
             switch (orderOredringEnum)
             {
                 case OrderOredringEnum.Time:
                     orders = Asinding ? orders.OrderBy(x => x.OrderDate) : orders.OrderByDescending(x => x.OrderDate);
                     break;
+
                 case OrderOredringEnum.TotalAmount:
                     orders = Asinding ? orders.OrderBy(x => x.TotalAmount) : orders.OrderByDescending(x => x.TotalAmount);
                     break;
+
                 case OrderOredringEnum.Status:
                     orders = Asinding ? orders.OrderBy(x => x.Status) : orders.OrderByDescending(x => x.Status);
                     break;
             }
 
             return orders;
-
         }
 
         public async Task<ResultServices> DeleteOrderFormDb(string Id)
@@ -295,24 +295,18 @@ namespace Services.OderServices
                 await _unitOfWork.Repository<Order>().DeleteAsync(Order);
                 await _unitOfWork.CommentAsync();
                 return new ResultServices { Succesd = true };
-
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollBackAsync();
                 return new ResultServices { Msg = ex.InnerException.Message };
             }
-
         }
 
-        #endregion
-
-
-
-
-
+        #endregion Admin
 
         #region Seller
+
         public IQueryable<GetSellerOrderDto> GetSellerOrders(
           string Sellerid,
           string? Searchtearm,
@@ -330,8 +324,8 @@ namespace Services.OderServices
                 Query = Query.Where(x =>
                    x.OrderID.Contains(Searchtearm) ||
                    x.Product.Name.Contains(Searchtearm) ||
-                   x.User.Email.Contains(Searchtearm) 
-                
+                   x.User.Email.Contains(Searchtearm)
+
                );
             }
 
@@ -343,6 +337,7 @@ namespace Services.OderServices
             // order
             return orderBySeller(Query, orederBy, orderOredringEnum);
         }
+
         private IQueryable<GetSellerOrderDto> GetOrderQuerybleSeller(string Sellerid)
         {
             return _unitOfWork.Repository<OrderItem>()
@@ -358,7 +353,7 @@ namespace Services.OderServices
                          Id = order.Order.User.Id,
                          Name = order.Order.User.Name
                      },
-                     
+
                      OrderDate = order.Order.OrderDate,
                      TotalAmount = order.Quantity * order.Price,
                      Status = order.Status,
@@ -384,39 +379,39 @@ namespace Services.OderServices
                  });
         }
 
-       
-       private IQueryable<GetSellerOrderDto> orderBySeller(IQueryable<GetSellerOrderDto> orders, OrederBy? orederBy,
-     OrderOredringEnum? orderOredringEnum)
+        private IQueryable<GetSellerOrderDto> orderBySeller(IQueryable<GetSellerOrderDto> orders, OrederBy? orederBy,
+      OrderOredringEnum? orderOredringEnum)
         {
-            // init 
+            // init
             bool Asinding = orederBy == 0 || orederBy == null;
             orderOredringEnum ??= 0;
-
 
             switch (orderOredringEnum)
             {
                 case OrderOredringEnum.Time:
                     orders = Asinding ? orders.OrderBy(x => x.OrderDate) : orders.OrderByDescending(x => x.OrderDate);
                     break;
+
                 case OrderOredringEnum.TotalAmount:
                     orders = Asinding ? orders.OrderBy(x => x.Price) : orders.OrderByDescending(x => x.Price);
                     break;
+
                 case OrderOredringEnum.Status:
                     orders = Asinding ? orders.OrderBy(x => x.Status) : orders.OrderByDescending(x => x.Status);
                     break;
             }
 
             return orders;
-
         }
 
-      
-        #endregion
+        public async Task<string> GetsellerIdWithProductId(string ProductId)
+        {
+            var Product = await _unitOfWork.Repository<ProductListing>().FindOneAsync(x => x.ProductID == ProductId);
+            return Product.SellerID;
+        }
 
+        #endregion Seller
 
-
-        #endregion
-
-
+        #endregion Implemntation
     }
 }

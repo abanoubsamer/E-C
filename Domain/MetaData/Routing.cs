@@ -19,6 +19,7 @@ namespace Domain.MetaData
         {
             public const string Prefix = Role + "Product/";
             public const string List = Prefix + "List";
+            public const string GetMaster = Prefix + "GetMaster/" + SingelId;
             public const string Add = Prefix + "Add";
             public const string Update = Prefix + "Update";
             public const string Pagination = Prefix + "Pagination";
@@ -97,6 +98,8 @@ namespace Domain.MetaData
 
             //   public const string Add = Prefix + "Add";
             public const string Update = Prefix + "Update";
+
+            public const string AddTest = Prefix + "AddTest";
 
             public const string UpdateStatus = Prefix + "UpdateStatus";
             public const string Pagination = Prefix + "Pagination";

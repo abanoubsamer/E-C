@@ -14,13 +14,20 @@ namespace Services.OderServices
 {
     public interface IOrderServices
     {
+        public Task<OrderWithTokenResult> GetOrderWithJWT(Domain.Models.Order entity);
 
+        public Task<decimal> GetTotalAmountProduct(string ProductId, int Quantity);
 
-        public  Task<OrderWithTokenResult> GetOrderWithJWT(Domain.Models.Order entity);
+        public Task<string> GetsellerIdWithProductId(string ProductId);
+
         public Task<ResultServices> UpdateStatusOrder(string OrderId, string productId, OrderItemStatus Status);
+
         public Task<ResultServices> AddOrder(Domain.Models.Order entity);
+
         public Task<ResultServices> DeleteOrderFormDb(string Id);
+
         public Task<ResultServices> CancelOrder(string Id);
+
         public IQueryable<Domain.Models.Order> FilterOrder(
           string? OrderId,
           string? ProductID,
@@ -31,18 +38,20 @@ namespace Services.OderServices
           string? PaymentMethod,
           OrederBy? orederBy,
           OrderOredringEnum? orderOredringEnum);
-        public Expression<Func<T, TResponse>> expression<T,TResponse>(Func<T, TResponse> func); 
+
+        public Expression<Func<T, TResponse>> expression<T, TResponse>(Func<T, TResponse> func);
+
         public Task<Domain.Models.Order> GetOrderById(string id);
+
         public Task<List<Domain.Models.Order>> GetUserOrders(string Userid);
+
         public IQueryable<GetSellerOrderDto> GetSellerOrders(string Sellerid,
           string? Searchtearm,
-        
+
           DateTime? fromDate,
           DateTime? toDate,
           OrderItemStatus? Status,
           OrederBy? orederBy,
           OrderOredringEnum? orderOredringEnum);
-
-
     }
 }

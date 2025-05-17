@@ -12,22 +12,22 @@ namespace Domain.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        
         public string SellerID { get; set; }
 
         public string ShopName { get; set; }
-        
+
         public string Type { get; set; }
 
         public string ContactInfo { get; set; }
-       
+
         public string country { get; set; }
 
         // Relationship with User
         public string UserID { get; set; }
+
         [ForeignKey(nameof(UserID))]
         public virtual ApplicationUser User { get; set; }
 
-        public virtual ICollection<Product> Products { get; set; }
+        public virtual ICollection<ProductListing> Products { get; set; }
     }
 }

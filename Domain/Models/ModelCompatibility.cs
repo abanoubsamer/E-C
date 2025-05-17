@@ -23,9 +23,9 @@ namespace Domain.Models
         [ForeignKey(nameof(ModelId))]
         public virtual Models Model { get; set; }
 
-        public string ProductId { get; set; }
+        public string SKU { get; set; }
 
-        [ForeignKey(nameof(ProductId))]
-        public virtual Product Product { get; set; }
+        [ForeignKey(nameof(SKU))]
+        public virtual ProductMaster ProductMaster { get; set; }
     }
 }

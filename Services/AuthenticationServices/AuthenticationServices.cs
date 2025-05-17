@@ -24,13 +24,16 @@ namespace Services.AuthenticationServices
     public class AuthenticationServices : IAuthenticationServices
     {
         #region Fildes
+
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IUnitOfWork _UnitOfWork;
         private readonly IOptions<JwtOptions> _jwtOptions;
-        #endregion
+
+        #endregion Fildes
 
         #region Constractor
+
         public AuthenticationServices(
            RoleManager<IdentityRole> roleManager,
             UserManager<ApplicationUser> UserManager
@@ -43,35 +46,35 @@ namespace Services.AuthenticationServices
             _userManager = UserManager;
             _jwtOptions = jwtOptions;
         }
-        #endregion
 
+        #endregion Constractor
 
         #region Implemntation
+
         public async Task<AuthModelResult> GetTokenAsync(ApplicationUser user)
         {
             var authModel = new AuthModelResult();
 
             if (user == null) return authModel;
 
-            var token = await GenrateJwtAsync(user);     
+            var token = await GenrateJwtAsync(user);
 
             var Roles = await _userManager.GetRolesAsync(user);
-          
+
             authModel.UserId = user.Id;
             authModel.Token = new JwtSecurityTokenHandler().WriteToken(token);
             authModel.Email = user.Email;
+            authModel.SellerId = user.SellerID;
             authModel.UserName = user.UserName;
             authModel.Expiration = token.ValidTo;
             authModel.Roles = Roles.ToList();
             authModel.IsAuthenticated = true;
-           
-            
+
             if (user.RefreshTokens.Any(t => t.IsActive))
             {
                 var ActiveRefreshToken = user.RefreshTokens.FirstOrDefault(t => t.IsActive);
                 authModel.RefreshToken = ActiveRefreshToken.Token;
                 authModel.RefreshTokenExpiration = ActiveRefreshToken.ExpirsOn;
-                 
             }
             else
             {
@@ -89,44 +92,39 @@ namespace Services.AuthenticationServices
                 {
                     Console.WriteLine(ex.Message);
                 }
-
             }
 
             return authModel;
-
         }
 
         private async Task<SecurityToken> GenrateJwtAsync(ApplicationUser user)
         {
             //Aggregation User Claims
             var Claims = await GetUserClaimsAsync(user);
-            // Get Role Claims 
+            // Get Role Claims
             var RoleClaims = await GetRoleCalimsAsync(user);
 
             // Aggragation All Claims
             Claims.AddRange(RoleClaims);
 
-
             //CreateJwtToken
-            var token =  CreateJwtToken(Claims);
+            var token = CreateJwtToken(Claims);
 
-
-              return  token;
+            return token;
         }
 
         private SecurityToken CreateJwtToken(List<Claim> Claims)
         {
-            //Genrate Key 
+            //Genrate Key
             var Key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey));
-            //Genratate Descriptor Token 
+            //Genratate Descriptor Token
             var TokenDesc = new SecurityTokenDescriptor
             {
                 Audience = _jwtOptions.Value.Audience,
                 Issuer = _jwtOptions.Value.Issuer,
                 Expires = DateTime.UtcNow.AddHours(_jwtOptions.Value.LiveTimeHouer),
                 Subject = new ClaimsIdentity(Claims),
-                SigningCredentials = new SigningCredentials(Key,SecurityAlgorithms.HmacSha256)
-
+                SigningCredentials = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256)
             };
 
             var TokenHanlder = new JwtSecurityTokenHandler();
@@ -135,11 +133,11 @@ namespace Services.AuthenticationServices
 
         private async Task<List<Claim>> GetUserClaimsAsync(ApplicationUser user)
         {
-            // Get User Claims 
+            // Get User Claims
             var userClaims = await _userManager.GetClaimsAsync(user);
-            // new jwt id 
-            var JWTID =  Guid.NewGuid().ToString();
-            //Add New Claims 
+            // new jwt id
+            var JWTID = Guid.NewGuid().ToString();
+            //Add New Claims
             var NewClaims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Email, user.Email),
@@ -148,23 +146,19 @@ namespace Services.AuthenticationServices
                 new Claim(JwtRegisteredClaimNames.Jti, JWTID)
             };
 
-        
             if (!string.IsNullOrEmpty(user.SellerID))
             {
                 NewClaims.Add(new Claim("SellerId", user.SellerID));
             }
 
-
             NewClaims.AddRange(userClaims);
 
             return NewClaims;
-
         }
 
         private async Task<List<Claim>> GetRoleCalimsAsync(ApplicationUser user)
         {
-
-            //Get Role User 
+            //Get Role User
             var userRole = await _userManager.GetRolesAsync(user);
             var RoleClaims = new List<Claim>();
 
@@ -172,7 +166,7 @@ namespace Services.AuthenticationServices
             {
                 RoleClaims.Add(new Claim(ClaimTypes.Role, roleName));
                 var Role = await _roleManager.FindByNameAsync(roleName);
-                if(Role != null)
+                if (Role != null)
                 {
                     var ClaimsForRole = await _roleManager.GetClaimsAsync(Role);
                     RoleClaims.AddRange(ClaimsForRole);
@@ -187,13 +181,13 @@ namespace Services.AuthenticationServices
             var AuthModel = new AuthModelResult();
             var claims = validationJwtWithOutExpiration(AccessToken);
 
-            if(claims == null)
+            if (claims == null)
             {
                 AuthModel.Messgage = "Invalid Token";
                 return AuthModel;
             }
 
-            //get user with has IS Token 
+            //get user with has IS Token
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.RefreshTokens.Any(x => x.Token == RefreshToken));
 
             if (user == null)
@@ -202,21 +196,18 @@ namespace Services.AuthenticationServices
                 return AuthModel;
             }
 
-
-            // get Tokens With User 
+            // get Tokens With User
 
             var storgeRefreshToken = user.RefreshTokens.SingleOrDefault(x => x.Token == RefreshToken);
 
             var tokenUserId = claims.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-          
 
-            if (tokenUserId.Value != storgeRefreshToken.ApplicationUserId ) {
+            if (tokenUserId.Value != storgeRefreshToken.ApplicationUserId)
+            {
                 AuthModel.Messgage = "Invalid Token User";
                 return AuthModel;
             }
 
-
-           
             if (storgeRefreshToken == null || !storgeRefreshToken.IsActive)
             {
                 AuthModel.Messgage = "Invalid Token Or Expired";
@@ -239,10 +230,8 @@ namespace Services.AuthenticationServices
             AuthModel.UserName = user.UserName;
             AuthModel.Roles = Roles.ToList();
             return AuthModel;
-
-
         }
-      
+
         private async Task<RefreshToken> GenerateRefreshToken()
         {
             var RendemNumber = new byte[32];
@@ -253,7 +242,6 @@ namespace Services.AuthenticationServices
                 Token = Convert.ToBase64String(RendemNumber),
                 CreateOn = DateTime.UtcNow,
                 ExpirsOn = DateTime.UtcNow.AddDays(5)
-
             };
         }
 
@@ -264,16 +252,16 @@ namespace Services.AuthenticationServices
 
             try
             {
-
                 var principal = tokenHandler.ValidateToken(token,
                     new TokenValidationParameters
                     {
                         ValidateAudience = true,
                         ValidateIssuer = true,
                         IssuerSigningKey = new SymmetricSecurityKey(key)
-                        , ValidAudience = _jwtOptions.Value.Audience,
+                        ,
+                        ValidAudience = _jwtOptions.Value.Audience,
                         ValidIssuer = _jwtOptions.Value.Issuer
-                    },out SecurityToken validatedToken);
+                    }, out SecurityToken validatedToken);
 
                 return principal;
             }
@@ -281,8 +269,6 @@ namespace Services.AuthenticationServices
             {
                 return null;
             }
-
-
         }
 
         public async Task<ResultServices> Registration(ApplicationUser user, string password, string Role)
@@ -292,8 +278,6 @@ namespace Services.AuthenticationServices
             var trasnaction = await _UnitOfWork.BeginTransactionAsync();
             try
             {
-
-
                 var result = await _userManager.CreateAsync(user, password);
 
                 if (!result.Succeeded)
@@ -315,32 +299,25 @@ namespace Services.AuthenticationServices
                     {
                         errors += $"{error.Description} :";
                     }
-
                     await _UnitOfWork.RollBackAsync();
                     return new ResultServices { Msg = errors };
                 }
 
-
                 await _UnitOfWork.Repository<Domain.Models.Card>()
                          .AddAsync(new Domain.Models.Card { UserID = user.Id });
 
-
                 await _UnitOfWork.CommentAsync();
                 return new ResultServices { Succesd = true };
-
-
             }
             catch (Exception ex)
             {
                 await _UnitOfWork.RollBackAsync();
                 return new ResultServices { Msg = ex.Message };
             }
-
         }
 
         public async Task<LoginResult> CheckEmail(string email, string password)
         {
-
             if (email.IsNullOrEmpty() || password.IsNullOrEmpty()) return new LoginResult { Msg = "Email Or Password Invalid" };
 
             try
@@ -352,52 +329,41 @@ namespace Services.AuthenticationServices
 
                 if (!result) return new LoginResult { Msg = "Email Or Password Invalid" };
 
-
                 return new LoginResult { Succesd = true, User = user };
-
             }
             catch (Exception ex)
             {
                 return new LoginResult { Msg = ex.Message };
             }
-
-
-
         }
-        
-        
+
         public async Task<LoginResult> CheckEmailSeller(string email, string password)
         {
-
             if (email.IsNullOrEmpty() || password.IsNullOrEmpty()) return new LoginResult { Msg = "Email Or Password Invalid" };
 
             try
             {
                 var user = await _userManager.FindByEmailAsync(email);
-               
+
                 if (user == null) return new LoginResult { Msg = "Email Or Password Invalid" };
 
-                if (user.Seller == null) new LoginResult { Msg = "Email Or Password Invalid" };
+                if (user.Seller == null) return new LoginResult { Msg = "Email Or Password Invalid" };
 
                 var result = await _userManager.CheckPasswordAsync(user, password);
 
                 if (!result) return new LoginResult { Msg = "Email Or Password Invalid" };
-          
-                return new LoginResult { Succesd = true, User = user };
 
+                return new LoginResult { Succesd = true, User = user };
             }
             catch (Exception ex)
             {
                 return new LoginResult { Msg = ex.Message };
             }
-
-
-
         }
 
         public async Task<AuthModelResult> LoginWithGoogle(ApplicationUser user)
         {
-            if (user == null) return new AuthModelResult { Messgage = " Invalid User"};
+            if (user == null) return new AuthModelResult { Messgage = " Invalid User" };
 
             try
             {
@@ -416,7 +382,7 @@ namespace Services.AuthenticationServices
                         }
                         return new AuthModelResult { Messgage = errors };
                     }
-                    // add role 
+                    // add role
                     var resultRole = await _userManager.AddToRoleAsync(user, "User");
                     if (!resultRole.Succeeded)
                     {
@@ -434,15 +400,13 @@ namespace Services.AuthenticationServices
                 }
 
                 //Get Token
-                return  await GetTokenAsync(UserExist);
-
+                return await GetTokenAsync(UserExist);
             }
             catch (Exception ex)
             {
                 await _UnitOfWork.RollBackAsync();
                 return new AuthModelResult { Messgage = ex.Message };
             }
-
         }
 
         public ClaimsPrincipal ValidationToken(string token)
@@ -451,7 +415,6 @@ namespace Services.AuthenticationServices
             var key = Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey);
             try
             {
-
                 var principal = tokenHandler.ValidateToken(token,
                     new TokenValidationParameters
                     {
@@ -464,16 +427,14 @@ namespace Services.AuthenticationServices
                         ValidIssuer = _jwtOptions.Value.Issuer
                     }, out SecurityToken validatedToken);
 
-                  return  principal;
-
+                return principal;
             }
             catch (Exception ex)
             {
                 return null;
             }
         }
-        #endregion
 
-
+        #endregion Implemntation
     }
 }

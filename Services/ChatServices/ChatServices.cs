@@ -46,7 +46,6 @@ namespace Services.ChatServices
             if (string.IsNullOrEmpty(request.UserId))
                 yield break;
 
-            // جلب سجل المحادثة من الكاش
             var chatHistory = _memoryCache.GetOrCreate(request.UserId, entry =>
             {
                 entry.SlidingExpiration = _cacheExpiration;
@@ -73,13 +72,10 @@ namespace Services.ChatServices
                 });
             }
 
-            // إضافة الرسالة الجديدة إلى السجل
             chatHistory.Add(new Message { role = "user", content = contentArray });
 
-            // الاحتفاظ بآخر 10 رسائل فقط
             chatHistory = chatHistory.TakeLast(10).ToList();
 
-            // تحضير الطلب بحيث يتم فهم المحادثة لكن يتم الرد فقط على آخر رسالة
             var requestData = new RequestData
             {
                 model = "google/gemini-2.0-flash-exp:free",
@@ -90,13 +86,11 @@ namespace Services.ChatServices
                 stream = true
             };
 
-            // إضافة الرسائل السابقة كمعلومات سياقية فقط بدون الرد عليها
             foreach (var msg in chatHistory.Take(chatHistory.Count - 1))
             {
                 requestData.messages.Add(new Message { role = msg.role, content = msg.content });
             }
 
-            // إرسال آخر رسالة فقط للرد عليها
             requestData.messages.Add(new Message { role = "user", content = contentArray });
 
             var httpClient = _httpClientFactory.CreateClient();

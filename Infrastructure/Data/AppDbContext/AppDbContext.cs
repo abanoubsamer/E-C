@@ -28,7 +28,8 @@ namespace Infrastructure.Data.AppDbContext
         public DbSet<Card> Card { get; set; }
         public DbSet<CardItem> CardItem { get; set; }
         public DbSet<ProductImages> productImages { get; set; }
-        public DbSet<Product> Products { get; set; }
+        public DbSet<ProductListing> Products { get; set; }
+        public DbSet<ProductMaster> ProductsMaster { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }

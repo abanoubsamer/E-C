@@ -16,8 +16,8 @@ namespace Core.Meditor.User.Queries.Response
 
         public string UserID { get; set; }
 
+        public string SellerId { get; set; }
+
         public List<string> Roles { get; set; }
-
-
     }
 }

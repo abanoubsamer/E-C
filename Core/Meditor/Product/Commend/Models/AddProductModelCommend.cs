@@ -27,5 +27,7 @@ namespace Core.Meditor.Product.Commend.Models
         public string SellerID { get; set; }
 
         public string CategoryID { get; set; }
+
+        public string SKU { get; set; }
     }
 }

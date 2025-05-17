@@ -23,55 +23,51 @@ namespace Core.Meditor.User.Commend.Hnadling
         IRequestHandler<ValidationTokenCommend, Response<string>>,
         IRequestHandler<RegistrationSellerModelCommend, Response<string>>
     {
-
         #region Fialds
+
         private readonly IAuthenticationServices _authServices;
         private readonly IMapper _mapper;
-        #endregion
+
+        #endregion Fialds
 
         #region Constractor
+
         public AuthenticationHandlingCommend(IAuthenticationServices authServices, IMapper mapper)
         {
             _mapper = mapper;
-            _authServices =authServices;
+            _authServices = authServices;
         }
 
-        #endregion
-
+        #endregion Constractor
 
         #region Handling
+
         public async Task<Response<string>> Handle(RegistrationUserModelCommend request, CancellationToken cancellationToken)
         {
             var UserMapping = _mapper.Map<ApplicationUser>(request);
 
-            var result = await _authServices.Registration(UserMapping, request.Password,"User");
-           
+            var result = await _authServices.Registration(UserMapping, request.Password, "User");
+
             if (!result.Succesd) return UnprocessableEntity<string>(result.Msg);
 
-            
             return Created<string>("Succesed Reqistraction");
-
-
         }
 
         public async Task<Response<string>> Handle(RegistrationSellerModelCommend request, CancellationToken cancellationToken)
         {
             var sellerMapping = _mapper.Map<ApplicationUser>(request);
-            var result = await _authServices.Registration(sellerMapping, request.Password,"Seller");
+            var result = await _authServices.Registration(sellerMapping, request.Password, "Seller");
             if (!result.Succesd) return BadRequest<string>(result.Msg);
-            
             return Created("Secces Create");
         }
 
         public async Task<Response<string>> Handle(ValidationTokenCommend request, CancellationToken cancellationToken)
         {
             var claims = _authServices.ValidationToken(request.Token);
-            if (claims == null) return  BadRequest<string>("Invalid Token");
+            if (claims == null) return BadRequest<string>("Invalid Token");
             return Success("Token IS Falid");
         }
 
-
-        #endregion
-
+        #endregion Handling
     }
 }

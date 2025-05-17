@@ -22,6 +22,14 @@ namespace E_Commerce.Controllers
         {
         }
 
+        //
+        [HttpGet]
+        [Route(Routing.Product.GetMaster)]
+        public async Task<IActionResult> GetMaster(string Id)
+        {
+            return NewResult(await _Mediator.Send(new GetProductMasterModel(Id)));
+        }
+
         [HttpPost]
         [Route(Routing.Product.Add)]
         public async Task<IActionResult> Add([FromForm] AddProductModelCommend entity)

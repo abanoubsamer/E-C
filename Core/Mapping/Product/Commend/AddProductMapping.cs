@@ -11,9 +11,8 @@ namespace Core.Mapping.Product
     {
         public void AddProductMapping()
         {
-            CreateMap<AddProductModelCommend, Domain.Models.Product>()
-
-             .ForMember(des => des.CategoryID, src => src.MapFrom(src => src.CategoryID))
+            CreateMap<AddProductModelCommend, Domain.Models.ProductListing>()
+                 .ForMember(des => des.SKU, src => src.MapFrom(src => src.SKU))
              .ForMember(des => des.SellerID, src => src.MapFrom(src => src.SellerID));
         }
     }

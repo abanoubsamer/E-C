@@ -4,6 +4,7 @@ using Core.Meditor.Product.Queries.Models;
 using Core.Meditor.Product.Queries.Response;
 using Core.Pagination;
 using Core.Pagination.Extensions;
+using Domain;
 using Domain.Dtos.Product.Queries;
 using MediatR;
 using Services.ProductServices;
@@ -18,7 +19,8 @@ namespace Core.Meditor.Product.Queries.Handling
     public class HandlingProductQueries : ResponseHandler,
         IRequestHandler<GetProductListModelQueries, Response<List<GetProductListResponseQueries>>>,
         IRequestHandler<GetProductByIdModelQueries, Response<GetProductByIdResponsesQueries>>,
-        IRequestHandler<GetProductPagination, PaginationResult<GetProducPaginationResponse>>
+        IRequestHandler<GetProductPagination, PaginationResult<GetProducPaginationResponse>>,
+        IRequestHandler<GetProductMasterModel, Response<List<ProductMasterDto>>>
     {
         #region Filads
 
@@ -71,6 +73,13 @@ namespace Core.Meditor.Product.Queries.Handling
             };
 
             return PaginationList;
+        }
+
+        public async Task<Response<List<ProductMasterDto>>> Handle(GetProductMasterModel request, CancellationToken cancellationToken)
+        {
+            var prod = await _productServices.GetMasterProduct(request.SKU);
+            if (prod == null) return NotFound<List<ProductMasterDto>>("Not Found");
+            return Success(prod);
         }
 
         #endregion Handling

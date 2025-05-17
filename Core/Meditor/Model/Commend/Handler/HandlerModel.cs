@@ -30,7 +30,7 @@ namespace Core.Meditor.Model.Commend.Handler
             {
                 MaxYear = x.MaxYear,
                 ModelId = x.ModelId,
-                ProductId = x.ProductId,
+                SKU = x.SKU,
                 MinYear = x.MinYear
             }).ToList();
 

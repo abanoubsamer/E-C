@@ -7,39 +7,35 @@ using System.Threading.Tasks;
 
 namespace Core.Meditor.Product.Queries.Response
 {
-    public class GetProductPaginagtionResponseQueries: GetProductListResponseQueries
+    public class GetProductPaginagtionResponseQueries : GetProductListResponseQueries
     {
+        public GetProductPaginagtionResponseQueries(Domain.Models.ProductListing product)
+        {
+            ProductID = product.ProductID.ToString();
+            Name = product.Name;
+            Description = product.Description;
 
-       
-            public GetProductPaginagtionResponseQueries(Domain.Models.Product product)
+            AverageRating = product.AverageRating;
+            Price = product.Price;
+            StockQuantity = product.StockQuantity;
+
+            Seller = new SellerDto
             {
-                ProductID = product.ProductID.ToString();
-                Name = product.Name;
-                Description = product.Description;
-         
-                AverageRating = product.AverageRating;
-                Price = product.Price;
-                StockQuantity = product.StockQuantity;
+                id = product.Seller.SellerID.ToString(),
+                name = product.Seller.User.Name
+            };
 
-                Seller = new SellerDto
-                {
-                    id = product.Seller.SellerID.ToString(),
-                    name = product.Seller.User.Name
-                };
+            Category = new CategoryDto
+            {
+                Id = product.Product.Category.CategoryID.ToString(),
+                Name = product.Product.Category.Name
+            };
 
-                Category = new CategoryDto
-                {
-                    Id = product.Category.CategoryID.ToString(),
-                    Name = product.Category.Name
-                };
-
-                Images = product.Images.Select(img => new ProductImagesDto
-                {
-                    id = img.ImageID.ToString(),
-                    Image = img.ImageUrl
-                }).ToList();
-            }
+            Images = product.Images.Select(img => new ProductImagesDto
+            {
+                id = img.ImageID.ToString(),
+                Image = img.ImageUrl
+            }).ToList();
         }
-
-    
+    }
 }

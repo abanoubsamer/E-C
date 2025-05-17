@@ -28,6 +28,6 @@ namespace Domain.Models
 
         public virtual ICollection<Category> SubCategories { get; set; }
 
-        public virtual ICollection<Product> Products { get; set; }
+        public virtual ICollection<ProductMaster> ProductsMaster { get; set; }
     }
 }

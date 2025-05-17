@@ -195,22 +195,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("Domain.Models.EngineType", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)")
-                        .HasDefaultValueSql("NEWID()");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EngineType");
-                });
-
             modelBuilder.Entity("Domain.Models.ModelCompatibility", b =>
                 {
                     b.Property<string>("Id")
@@ -228,7 +212,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProductId")
+                    b.Property<string>("SKU")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -236,7 +220,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("ModelId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("SKU");
 
                     b.ToTable("ModelCompatibilitys");
                 });
@@ -385,44 +369,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Payments");
                 });
 
-            modelBuilder.Entity("Domain.Models.Product", b =>
-                {
-                    b.Property<string>("ProductID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)")
-                        .HasDefaultValueSql("NEWID()");
-
-                    b.Property<string>("CategoryID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("SellerID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("ProductID");
-
-                    b.HasIndex("CategoryID");
-
-                    b.HasIndex("SellerID");
-
-                    b.ToTable("Products");
-                });
-
             modelBuilder.Entity("Domain.Models.ProductImages", b =>
                 {
                     b.Property<string>("ImageID")
@@ -473,6 +419,60 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ProductInteraction");
+                });
+
+            modelBuilder.Entity("Domain.Models.ProductListing", b =>
+                {
+                    b.Property<string>("ProductID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(450)")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SellerID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductID");
+
+                    b.HasIndex("SKU");
+
+                    b.HasIndex("SellerID");
+
+                    b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Domain.Models.ProductMaster", b =>
+                {
+                    b.Property<string>("SKU")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CategoryID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("SKU");
+
+                    b.HasIndex("CategoryID");
+
+                    b.ToTable("ProductsMaster");
                 });
 
             modelBuilder.Entity("Domain.Models.ProductView", b =>
@@ -864,7 +864,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Models.Product", "Product")
+                    b.HasOne("Domain.Models.ProductListing", "Product")
                         .WithMany()
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -892,15 +892,15 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Models.Product", "Product")
-                        .WithMany("ModelCompatibilities")
-                        .HasForeignKey("ProductId")
+                    b.HasOne("Domain.Models.ProductMaster", "ProductMaster")
+                        .WithMany("Compatibilities")
+                        .HasForeignKey("SKU")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Model");
 
-                    b.Navigation("Product");
+                    b.Navigation("ProductMaster");
                 });
 
             modelBuilder.Entity("Domain.Models.Models", b =>
@@ -943,7 +943,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.OrderItem", b =>
                 {
-                    b.HasOne("Domain.Models.Product", "Product")
+                    b.HasOne("Domain.Models.ProductListing", "Product")
                         .WithMany("OrderItems")
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -979,28 +979,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("Domain.Models.Product", b =>
-                {
-                    b.HasOne("Domain.Models.Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Models.Seller", "Seller")
-                        .WithMany("Products")
-                        .HasForeignKey("SellerID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Seller");
-                });
-
             modelBuilder.Entity("Domain.Models.ProductImages", b =>
                 {
-                    b.HasOne("Domain.Models.Product", "Product")
+                    b.HasOne("Domain.Models.ProductListing", "Product")
                         .WithMany("Images")
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1011,7 +992,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.ProductInteraction", b =>
                 {
-                    b.HasOne("Domain.Models.Product", "Product")
+                    b.HasOne("Domain.Models.ProductListing", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1026,9 +1007,39 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Models.ProductListing", b =>
+                {
+                    b.HasOne("Domain.Models.ProductMaster", "Product")
+                        .WithMany("Listings")
+                        .HasForeignKey("SKU")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Seller", "Seller")
+                        .WithMany("Products")
+                        .HasForeignKey("SellerID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Seller");
+                });
+
+            modelBuilder.Entity("Domain.Models.ProductMaster", b =>
+                {
+                    b.HasOne("Domain.Models.Category", "Category")
+                        .WithMany("ProductsMaster")
+                        .HasForeignKey("CategoryID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("Domain.Models.ProductView", b =>
                 {
-                    b.HasOne("Domain.Models.Product", "Product")
+                    b.HasOne("Domain.Models.ProductListing", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1045,7 +1056,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.Review", b =>
                 {
-                    b.HasOne("Domain.Models.Product", "Product")
+                    b.HasOne("Domain.Models.ProductListing", "Product")
                         .WithMany("Reviews")
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1186,7 +1197,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.Category", b =>
                 {
-                    b.Navigation("Products");
+                    b.Navigation("ProductsMaster");
 
                     b.Navigation("SubCategories");
                 });
@@ -1204,15 +1215,20 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Domain.Models.Product", b =>
+            modelBuilder.Entity("Domain.Models.ProductListing", b =>
                 {
                     b.Navigation("Images");
-
-                    b.Navigation("ModelCompatibilities");
 
                     b.Navigation("OrderItems");
 
                     b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("Domain.Models.ProductMaster", b =>
+                {
+                    b.Navigation("Compatibilities");
+
+                    b.Navigation("Listings");
                 });
 
             modelBuilder.Entity("Domain.Models.Seller", b =>

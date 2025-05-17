@@ -8,29 +8,31 @@ using Microsoft.EntityFrameworkCore;
 using SchoolWep.Data.Enums.Oredring;
 using System.Linq.Expressions;
 
-
 namespace Services.SellerServices
 {
     public class SellerServices : ISellerServices
     {
+        #region Fialds
 
-        #region Fialds 
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
-        #endregion
+
+        #endregion Fialds
 
         #region Constractor
+
         public SellerServices(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
-        #endregion
+
+        #endregion Constractor
+
         public Expression<Func<ApplicationUser, TResponse>> CreateExpression<TResponse>(Func<ApplicationUser, TResponse> func)
         {
             return x => func(x);
         }
-
 
         public async Task<bool> EmailIsExist(string Email)
         {
@@ -89,11 +91,10 @@ namespace Services.SellerServices
             return Oreder(query, orderBy, userOrderingEnum);
         }
 
-
         public IQueryable<GetSelleProductsResponseDto> FilterSellerProduct(string sellerId, string? searchTerm)
         {
             if (string.IsNullOrEmpty(sellerId))
-                return Enumerable.Empty<GetSelleProductsResponseDto>().AsQueryable(); 
+                return Enumerable.Empty<GetSelleProductsResponseDto>().AsQueryable();
 
             var query = GetQueryableSellerProducts(sellerId);
 
@@ -112,26 +113,24 @@ namespace Services.SellerServices
             return query;
         }
 
-
         public IQueryable<ApplicationUser> Oreder(IQueryable<ApplicationUser> Queres, OrederBy? orderBy,
             SellerOredringEnum? userOrderingEnum)
         {
             userOrderingEnum = userOrderingEnum == null ? 0 : userOrderingEnum;
             bool Asending = orderBy == null || orderBy == 0;
 
-
             switch (userOrderingEnum)
             {
                 case SellerOredringEnum.Name:
                     Queres = Asending ? Queres.OrderBy(x => x.Name) : Queres.OrderByDescending(x => x.Name);
                     break;
+
                 case SellerOredringEnum.Email:
                     Queres = Asending ? Queres.OrderBy(x => x.Email) : Queres.OrderByDescending(x => x.Email);
                     break;
             }
 
             return Queres;
-
         }
 
         private IQueryable<GetSelleProductsResponseDto> GetQueryableSellerProducts(string sellerid)
@@ -146,7 +145,7 @@ namespace Services.SellerServices
                     AverageRating = g.Average(r => r.Rating)
                 });
 
-            return _unitOfWork.Repository<Domain.Models.Product>()
+            return _unitOfWork.Repository<Domain.Models.ProductListing>()
                 .GetQueryable()
                 .AsNoTracking()
                 .Where(x => x.SellerID == sellerid)
@@ -155,14 +154,14 @@ namespace Services.SellerServices
                     id = product.ProductID,
                     name = product.Name,
                     descreption = product.Description,
- 
+
                     price = product.Price,
                     stock = product.StockQuantity,
 
                     avaragarate = reviewsQuery
                         .Where(r => r.ProductID == product.ProductID)
                         .Select(r => (double?)r.AverageRating)
-                        .FirstOrDefault() ?? 0, 
+                        .FirstOrDefault() ?? 0,
 
                     ProductImagesDto = product.Images.Select(x => new ProductImagesDto
                     {
@@ -172,13 +171,11 @@ namespace Services.SellerServices
 
                     category = new CategoryDto
                     {
-                        Id = product.Category.CategoryID,
-                        Name = product.Category.Name
+                        Id = product.Product.Category.CategoryID,
+                        Name = product.Product.Category.Name
                     },
                 });
         }
-
-
 
         private IQueryable<ApplicationUser> GetQueryable()
         {

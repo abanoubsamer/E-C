@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Configurations
 {
-    public class ProductConfig : IEntityTypeConfiguration<Product>
+    public class ProductConfig : IEntityTypeConfiguration<ProductListing>
     {
-        public void Configure(EntityTypeBuilder<Product> builder)
+        public void Configure(EntityTypeBuilder<ProductListing> builder)
         {
             builder.Property(o => o.ProductID)
                 .HasDefaultValueSql("NEWID()");

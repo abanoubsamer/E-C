@@ -12,7 +12,6 @@ namespace Domain.Models
     [Owned]
     public class ProductImages
     {
-
         [Key]
         public string ImageID { get; set; }
 
@@ -20,7 +19,8 @@ namespace Domain.Models
         public string ImageUrl { get; set; }
 
         public string ProductID { get; set; }
+
         [ForeignKey(nameof(ProductID))]
-        public virtual Product Product { get; set; }
+        public virtual ProductListing Product { get; set; }
     }
 }
