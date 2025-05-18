@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace Core.Meditor.Reviews.Queries.Models
 {
-    public class GetProductReviewsPaginationModel:IRequest<PaginationResult<GetReviewPaginationResponseDto>>    
+    public class GetProductReviewsPaginationModel : IRequest<PaginationResult<GetReviewPaginationResponseDto>>
     {
-        public required string ProductId { get; set; }
-        public int PageNamber { get; set; }
+        public string ProductId { get; set; }
+        public int PageNumber { get; set; }
         public int PageSize { get; set; }
         public OrederBy orederBy { get; set; }
         public ReviewOredringEnum reviewOredringEnum { get; set; }

@@ -13,31 +13,26 @@ namespace Core.Meditor.Reviews.Queries.Response
 {
     public class GetReviewPaginationResponse
     {
-
-
         public string ReviewID { get; set; }
-      
+
         public UserDto User { get; set; }
 
-        public  ProductDto  Product { get; set; }
+        public ProductDto Product { get; set; }
 
         public int Rating { get; set; }
 
         public string Comment { get; set; }
 
         public string ReviewDate { get; set; }
-        
+
         public GetReviewPaginationResponse(Review review)
         {
             ReviewID = review.ReviewID;
-            User =  new UserDto {Id = review.User.Id ,Email = review.User.Email, Name = review.User.Name } ;
-            Product = new ProductDto {Id = review.Product.ProductID, Name = review.Product.Name };
+            User = new UserDto { Id = review.User.Id, Email = review.User.Email, Name = review.User.Name };
+            Product = new ProductDto { Id = review.Product.ProductID, Name = review.Product.Name };
             Rating = review.Rating;
             Comment = review.Comment;
-            ReviewDate = review.ReviewDate.ToString();
+            ReviewDate = review.ReviewDate.ToLongDateString();
         }
-
-       
-
     }
 }

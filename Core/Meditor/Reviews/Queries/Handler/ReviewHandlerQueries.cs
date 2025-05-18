@@ -19,31 +19,29 @@ namespace Core.Meditor.Reviews.Queries.Handler
         IRequestHandler<GetRatingStatisticsModels, Response<GetRatingStatisticsResponse>>,
         IRequestHandler<GetProductReviewsPaginationModel, PaginationResult<GetReviewPaginationResponseDto>>
     {
-
         #region Fialds
+
         private readonly IReviewServices _reviewServices;
-        #endregion
+
+        #endregion Fialds
 
         #region Constractor
+
         public ReviewHandlerQueries(IReviewServices reviewServices)
         {
             _reviewServices = reviewServices;
         }
-        #endregion
 
-
-        #region Handler
-
-        #endregion
+        #endregion Constractor
 
         public async Task<PaginationResult<GetReviewPaginationResponse>> Handle(GetReviewsPaginationModel request, CancellationToken cancellationToken)
         {
             //create Expression
             var Exp = _reviewServices.CreateExpression(x => new GetReviewPaginationResponse(x));
             // Filter
-            var Filter = _reviewServices.FilterReview(request.ProductId,request.UserId,request.orederBy,request.reviewOredringEnum);
+            var Filter = _reviewServices.FilterReview(request.ProductId, request.UserId, request.orederBy, request.reviewOredringEnum);
             //PAGINATION
-            var PaginationList = await Filter.Select(Exp).ToPaginationListAsync(request.PageNamber, request.PageSize);
+            var PaginationList = await Filter.Select(Exp).ToPaginationListAsync(request.PageNumber, request.PageSize);
 
             PaginationList.Meta = new
             {
@@ -58,7 +56,11 @@ namespace Core.Meditor.Reviews.Queries.Handler
         {
             var Filter = _reviewServices.FilterProductReviews(request.ProductId, request.orederBy, request.reviewOredringEnum);
             //PAGINATION
-            var PaginationList = await Filter.ToPaginationListAsync(request.PageNamber, request.PageSize);
+            var PaginationList = await Filter.ToPaginationListAsync(request.PageNumber, request.PageSize);
+            PaginationList.Data.ToList().ForEach(x =>
+            {
+                x.ReviewDate = DateTime.Parse(x.ReviewDate).ToString("dd/MM/yyyy hh:mm tt");
+            });
 
             PaginationList.Meta = new
             {
@@ -71,12 +73,12 @@ namespace Core.Meditor.Reviews.Queries.Handler
 
         public async Task<Response<GetRatingStatisticsResponse>> Handle(GetRatingStatisticsModels request, CancellationToken cancellationToken)
         {
-            var (percentages, averageRating,numberReviews) = await _reviewServices.GetRatingStatistics(request.productid);
+            var (percentages, averageRating, numberReviews) = await _reviewServices.GetRatingStatistics(request.productid);
 
             var result = new GetRatingStatisticsResponse
             {
                 AverageRating = averageRating,
-                NamberReviews   = numberReviews,
+                NamberReviews = numberReviews,
                 Percentages = percentages,
             };
             return Success(result);

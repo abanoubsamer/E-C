@@ -12,13 +12,12 @@ using System.Threading.Tasks;
 
 namespace Core.Meditor.Order.Queries.Models
 {
-    public class OrderPaginationModel:IRequest<PaginationResult<OrderPaginationResponse>>
+    public class OrderPaginationModel : IRequest<PaginationResult<OrderPaginationResponse>>
     {
-   
-        public int PagaNamber { get; set; }
+        public int PageNumber { get; set; }
         public int PagaSize { get; set; }
         public string? OrderId { get; set; }
-        public string?ProductID { get; set; }
+        public string? ProductID { get; set; }
         public string? UserID { get; set; }
         public DateTime? OrderDate { get; set; }
         public OrderStatus? Status { get; set; }

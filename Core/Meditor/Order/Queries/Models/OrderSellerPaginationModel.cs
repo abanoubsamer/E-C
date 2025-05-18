@@ -17,15 +17,15 @@ namespace Core.Meditor.Order.Queries.Models
     public class OrderSellerPaginationModel : IRequest<PaginationResult<GetSellerOrderDto>>
     {
         [Required]
-        public required string SellerID { get; set; }
-        public int PagaNamber { get; set; }
+        public string SellerID { get; set; }
+
+        public int PageNumber { get; set; }
         public int PagaSize { get; set; }
-        public string? SearchTearm { get; set; }  
+        public string? SearchTearm { get; set; }
         public DateTime? fromDate { get; set; }
         public DateTime? toDate { get; set; }
         public OrderItemStatus? Status { get; set; }
         public OrederBy? orederBy { get; set; }
         public OrderOredringEnum? orderOredringEnum { get; set; }
-        
     }
 }

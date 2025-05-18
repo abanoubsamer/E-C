@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace Core.Meditor.Reviews.Queries.Models
 {
-    public class GetReviewsPaginationModel:IRequest<PaginationResult<GetReviewPaginationResponse>>
+    public class GetReviewsPaginationModel : IRequest<PaginationResult<GetReviewPaginationResponse>>
     {
-        public int PageNamber { get; set; }
+        public int PageNumber { get; set; }
         public int PageSize { get; set; }
         public string? ProductId { get; set; }
         public string? UserId { get; set; }

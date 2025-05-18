@@ -19,14 +19,7 @@ namespace Core.Mapping.Product
                   .ForPath(des => des.Seller.name, src => src.MapFrom(src => src.Seller.User.Name))
               .ForPath(des => des.Category.Id, src => src.MapFrom(src => src.Product.Category.CategoryID.ToString()))
                    .ForPath(des => des.Category.Name, src => src.MapFrom(src => src.Product.Category.Name))
-                  .ForMember(des => des.reviewDto, opt => opt.MapFrom(src => src.Reviews.Select(rec => new ReviewDto
-                  {
-                      ReviewID = rec.ReviewID.ToString(),
-                      Comment = rec.Comment,
-                      ReviewDate = rec.ReviewDate.ToShortDateString(),
-                      UserName = rec.User.Name,
-                      Rating = rec.Rating,
-                  })))
+
                   .ForMember(dest => dest.Images, opt => opt.MapFrom(src =>
                       src.Images.Select(img => new ProductImagesDto
                       {

@@ -142,7 +142,6 @@ namespace Services.ProductServices
             }
             catch (Exception ex)
             {
-                // Rollback transaction in case of an exception
                 await _unitOfWork.RollBackAsync();
                 return new ResultServices() { Succesd = false, Msg = ex.Message };
             }

@@ -15,23 +15,25 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Services.ReviewServices
 {
-
     public class ReviewServices : IReviewServices
     {
         #region Fialds
-        private readonly IUnitOfWork _unitOfWork;
-        #endregion
 
+        private readonly IUnitOfWork _unitOfWork;
+
+        #endregion Fialds
 
         #region Constractor
+
         public ReviewServices(IUnitOfWork unitOfWork)
         {
-            _unitOfWork = unitOfWork;   
+            _unitOfWork = unitOfWork;
         }
-        #endregion
 
+        #endregion Constractor
 
         #region Implemntation
+
         public Expression<Func<Review, TResponse>> CreateExpression<TResponse>(Func<Review, TResponse> func)
         {
             return x => func(x);
@@ -42,7 +44,7 @@ namespace Services.ReviewServices
             //GetQueries
             var Query = GetQueryabl();
 
-            //Filter 
+            //Filter
             if (!ProductId.IsNullOrEmpty())
             {
                 Query = Query.Where(x => x.ProductID == ProductId);
@@ -52,21 +54,20 @@ namespace Services.ReviewServices
                 Query = Query.Where(x => x.UserID == UserId);
             }
 
-            return Order(Query, orederBy, reviewOredringEnum) ;
-
+            return Order(Query, orederBy, reviewOredringEnum);
         }
-   
 
         public async Task<ResultServices> AddReview(Review entity)
         {
             if (entity == null) return new ResultServices { Msg = "Invalid Review" };
             try
             {
-               await _unitOfWork.Repository<Review>().AddAsync(entity);
+                await _unitOfWork.Repository<Review>().AddAsync(entity);
                 return new ResultServices { Succesd = true };
             }
-            catch (Exception ex) { 
-             return new ResultServices { Msg = ex.Message };
+            catch (Exception ex)
+            {
+                return new ResultServices { Msg = ex.Message };
             }
         }
 
@@ -80,8 +81,9 @@ namespace Services.ReviewServices
                 await _unitOfWork.Repository<Review>().DeleteAsync(review);
                 return new ResultServices { Succesd = true };
             }
-            catch (Exception ex) { 
-            return new ResultServices { Msg = ex.Message };
+            catch (Exception ex)
+            {
+                return new ResultServices { Msg = ex.Message };
             }
         }
 
@@ -104,7 +106,6 @@ namespace Services.ReviewServices
             return _unitOfWork.Repository<Review>().FindOneAsync(x => x.ReviewID == id);
         }
 
-
         private IQueryable<Review> Order(IQueryable<Review> Query, OrederBy? orederBy, ReviewOredringEnum? reviewOredringEnum)
         {
             // init
@@ -116,15 +117,15 @@ namespace Services.ReviewServices
                 case ReviewOredringEnum.Date:
                     Query = Asinding ? Query.OrderBy(x => x.ReviewDate) : Query.OrderByDescending(x => x.ReviewDate);
                     break;
+
                 case ReviewOredringEnum.Rating:
                     Query = Asinding ? Query.OrderBy(x => x.Rating) : Query.OrderByDescending(x => x.Rating);
                     break;
             }
 
             return Query;
-
         }
-       
+
         private IQueryable<Review> GetQueryabl()
         {
             return _unitOfWork.Repository<Review>()
@@ -138,8 +139,8 @@ namespace Services.ReviewServices
             var Queries = GetProductReviewsQueryabl(ProductId);
 
             return Order(Queries, orederBy, reviewOredringEnum);
-
         }
+
         private IQueryable<GetReviewPaginationResponseDto> Order(IQueryable<GetReviewPaginationResponseDto> Query, OrederBy? orederBy, ReviewOredringEnum? reviewOredringEnum)
         {
             // init
@@ -151,36 +152,36 @@ namespace Services.ReviewServices
                 case ReviewOredringEnum.Date:
                     Query = Asinding ? Query.OrderBy(x => x.ReviewDate) : Query.OrderByDescending(x => x.ReviewDate);
                     break;
+
                 case ReviewOredringEnum.Rating:
                     Query = Asinding ? Query.OrderBy(x => x.Rating) : Query.OrderByDescending(x => x.Rating);
                     break;
             }
 
             return Query;
-
         }
+
         private IQueryable<GetReviewPaginationResponseDto> GetProductReviewsQueryabl(string ProductId)
         {
             return _unitOfWork.Repository<Review>()
-                .GetQueryable().Where(x=>x.ProductID.Contains(ProductId)).Select(x => new GetReviewPaginationResponseDto { 
-                Comment = x.Comment,
-                Rating = x.Rating,
-                ReviewDate =x.ReviewDate.ToString(),
-                ReviewID = x.ReviewID,  
-                User = new Domain.Dtos.UserDto { Id = x.User.Id ,Name = x.User.Name}
-                
+                .GetQueryable().Where(x => x.ProductID.Contains(ProductId)).Select(x => new GetReviewPaginationResponseDto
+                {
+                    Comment = x.Comment,
+                    Rating = x.Rating,
+                    ReviewDate = x.ReviewDate.ToString(),
+                    ReviewID = x.ReviewID,
+                    User = new Domain.Dtos.UserDto { Id = x.User.Id, Name = x.User.Name }
                 });
-               
         }
 
-        public async Task<(Dictionary<int, double> Percentages, double AverageRating , int NumberReviews)>GetRatingStatistics(string productid)
+        public async Task<(Dictionary<int, double> Percentages, double AverageRating, int NumberReviews)> GetRatingStatistics(string productid)
         {
             var reviews = await _unitOfWork.Repository<Review>()
                 .FindMoreAsNoTrackingAsync(x => x.ProductID.Contains(productid));
 
             if (!reviews.Any())
             {
-                return (new Dictionary<int, double> { { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 }, { 5, 0 } }, 0,0);
+                return (new Dictionary<int, double> { { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 }, { 5, 0 } }, 0, 0);
             }
 
             int totalReviews = reviews.Count();
@@ -204,8 +205,6 @@ namespace Services.ReviewServices
             return (ratingPercentages, Math.Round(averageRating, 2), totalReviews);
         }
 
-        #endregion
-
-
+        #endregion Implemntation
     }
 }

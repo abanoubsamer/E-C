@@ -22,30 +22,33 @@ namespace Core.Meditor.Order.Queries.Handler
         IRequestHandler<OrderSellerPaginationModel, PaginationResult<GetSellerOrderDto>>,
         IRequestHandler<GetUserOrdersModel, Response<List<GetUserOrdersResponse>>>
     {
-
-
         #region Filads
+
         private readonly IOrderServices _orderServices;
         private readonly IMapper _mapper;
-        #endregion
+
+        #endregion Filads
 
         #region Constractor
+
         public OrderHandlerQueries(IOrderServices orderServices, IMapper mapper)
         {
             _mapper = mapper;
-            _orderServices = orderServices; 
+            _orderServices = orderServices;
         }
-        #endregion
+
+        #endregion Constractor
 
         #region Handler
+
         public async Task<PaginationResult<OrderPaginationResponse>> Handle(OrderPaginationModel request, CancellationToken cancellationToken)
         {
             //create Expression
             var Expression = _orderServices.expression<Domain.Models.Order, OrderPaginationResponse>(x => new OrderPaginationResponse(x));
-            // Filter 
+            // Filter
             var Filter = _orderServices.FilterOrder(request.OrderId, request.ProductID, request.UserID, request.OrderDate, request.Status, request.TransactionID, request.PaymentMethod, request.orederBy, request.orderOredringEnum);
-            // Pagination List 
-            var PaginationList = await Filter.Select(Expression).ToPaginationListAsync(request.PagaNamber, request.PagaSize);
+            // Pagination List
+            var PaginationList = await Filter.Select(Expression).ToPaginationListAsync(request.PageNumber, request.PagaSize);
 
             PaginationList.Meta = new
             {
@@ -62,17 +65,15 @@ namespace Core.Meditor.Order.Queries.Handler
             if (Order == null) return NotFound<List<GetUserOrdersResponse>>("Not Found Orders");
 
             var OrderMapping = _mapper.Map<List<GetUserOrdersResponse>>(Order);
-             
-            return Success(OrderMapping);
 
+            return Success(OrderMapping);
         }
 
         public async Task<PaginationResult<GetSellerOrderDto>> Handle(OrderSellerPaginationModel request, CancellationToken cancellationToken)
         {
-      
-            var Filter = _orderServices.GetSellerOrders(request.SellerID, request.SearchTearm, request.fromDate,request.toDate, request.Status, request.orederBy, request.orderOredringEnum);
-            // Pagination List 
-            var PaginationList = await Filter.ToPaginationListAsync(request.PagaNamber, request.PagaSize);
+            var Filter = _orderServices.GetSellerOrders(request.SellerID, request.SearchTearm, request.fromDate, request.toDate, request.Status, request.orederBy, request.orderOredringEnum);
+            // Pagination List
+            var PaginationList = await Filter.ToPaginationListAsync(request.PageNumber, request.PagaSize);
 
             PaginationList.Meta = new
             {
@@ -81,8 +82,7 @@ namespace Core.Meditor.Order.Queries.Handler
 
             return PaginationList;
         }
-        #endregion
 
-
+        #endregion Handler
     }
 }
