@@ -16,7 +16,5 @@ namespace Domain.Dtos
         public int MaxYear { get; set; }
 
         public string ModelId { get; set; }
-
-        public string SKU { get; set; }
     }
 }

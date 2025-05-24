@@ -1,6 +1,7 @@
 ﻿using Domain.Models;
 using Infrastructure.UnitOfWork;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Services.FileSystemServices;
 using Services.Result;
 using System;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Domain.MetaData.Routing;
 
 namespace Services.ModelsServices
 {
@@ -15,10 +17,12 @@ namespace Services.ModelsServices
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileServices fileServices;
+        private readonly IMemoryCache _cache;
 
-        public ModelsServices(IUnitOfWork unitOfWork, IFileServices fileServices)
+        public ModelsServices(IUnitOfWork unitOfWork, IMemoryCache cache, IFileServices fileServices)
         {
             _unitOfWork = unitOfWork;
+            _cache = cache;
             this.fileServices = fileServices;
         }
 
@@ -58,7 +62,19 @@ namespace Services.ModelsServices
         public async Task<Models> GetModelById(string id)
         {
             if (id == null) return null;
-            return await _unitOfWork.Repository<Models>().FindOneAsync(x => x.Id == id);
+
+            string cacheKey = $"Model_{id}";
+
+            if (_cache.TryGetValue(cacheKey, out Models cachedModel))
+                return cachedModel;
+
+            var model = await _unitOfWork.Repository<Models>()
+                .FindOneAsync(x => x.Id == id);
+
+            if (model != null)
+                _cache.Set(cacheKey, model, TimeSpan.FromHours(1));
+
+            return model;
         }
 
         public async Task<ResultServices> RemoveModel(Models entity)
@@ -105,7 +121,16 @@ namespace Services.ModelsServices
 
         public async Task<List<Models>> GetModelsWithCarBrand(string CarBrandId)
         {
-            return await _unitOfWork.Repository<Models>().FindMoreAsNoTrackingAsync(x => x.BrandId == CarBrandId);
+            string cacheKey = $"Models_Brand_{CarBrandId}";
+
+            if (_cache.TryGetValue(cacheKey, out List<Models> cachedModels))
+                return cachedModels;
+
+            var result = await _unitOfWork.Repository<Models>()
+                .FindMoreAsNoTrackingAsync(x => x.BrandId == CarBrandId);
+
+            _cache.Set(cacheKey, result, TimeSpan.FromHours(1));
+            return result;
         }
     }
 }

@@ -71,5 +71,13 @@ namespace E_Commerce.Controllers
         {
             return NewResult(await _Mediator.Send(new DeleteProductModelQueries(Id)));
         }
+
+        //
+        [HttpGet]
+        [Route(Routing.Product.AutoCompleteSearch)]
+        public async Task<IActionResult> AutoCompleteSearch(string Text)
+        {
+            return NewResult(await _Mediator.Send(new AutoCompleteSearchProductModel(Text)));
+        }
     }
 }

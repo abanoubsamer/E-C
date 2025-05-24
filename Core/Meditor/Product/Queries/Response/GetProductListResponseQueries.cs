@@ -13,29 +13,24 @@ namespace Core.Meditor.Product.Queries.Response
 {
     public class GetProductListResponseQueries
     {
-
         public string ProductID { get; set; }
 
         public string Name { get; set; }
 
+        public string SUK { get; set; }
+
         public string Description { get; set; }
-
-
 
         public double AverageRating { get; set; }
 
         public decimal Price { get; set; }
 
         public int StockQuantity { get; set; }
-     
-        public  SellerDto Seller { get; set; }
+
+        public SellerDto Seller { get; set; }
 
         public CategoryDto Category { get; set; }
 
-
         public List<ProductImagesDto> Images { get; set; }
-
     }
-
-  
 }

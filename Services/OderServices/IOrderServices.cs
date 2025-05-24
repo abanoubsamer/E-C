@@ -1,6 +1,7 @@
 ﻿using Domain.Dtos;
 using Domain.Enums.Oredring;
 using Domain.Enums.Status;
+using Domain.Models;
 using SchoolWep.Data.Enums.Oredring;
 using Services.Result;
 using System;
@@ -18,9 +19,9 @@ namespace Services.OderServices
 
         public Task<decimal> GetTotalAmountProduct(string ProductId, int Quantity);
 
-        public Task<string> GetsellerIdWithProductId(string ProductId);
+        public Task<Seller> GetsellerIdWithProductId(string ProductId);
 
-        public Task<ResultServices> UpdateStatusOrder(string OrderId, string productId, OrderItemStatus Status);
+        public Task<ResultUpdateStatusOrder> UpdateStatusOrder(string OrderId, string productId, OrderItemStatus Status);
 
         public Task<ResultServices> AddOrder(Domain.Models.Order entity);
 
@@ -53,5 +54,7 @@ namespace Services.OderServices
           OrderItemStatus? Status,
           OrederBy? orederBy,
           OrderOredringEnum? orderOredringEnum);
+
+        public Task CancelOrderIfAllPendingAsync(string orderId);
     }
 }

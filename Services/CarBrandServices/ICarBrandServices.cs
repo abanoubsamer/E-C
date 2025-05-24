@@ -23,5 +23,7 @@ namespace Services.CarBrandServices
         public Task<ResultServices> UpdateCarBrand(CarBrand entity, IFormFile? image);
 
         public Task<ResultServices> DeleteCarBrand(CarBrand entity);
+
+        public Task<List<CarBrand>> GetCarBrandsPagedCachedAsync(int pageNumber, int pageSize);
     }
 }

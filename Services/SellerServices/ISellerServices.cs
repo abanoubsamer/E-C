@@ -14,7 +14,6 @@ namespace Services.SellerServices
 {
     public interface ISellerServices
     {
-      
         public IQueryable<ApplicationUser> FilterSeller(
         string? UserName,
         string? Email,
@@ -26,7 +25,7 @@ namespace Services.SellerServices
         OrederBy? orederBy,
         SellerOredringEnum? userOredringEnum
         );
-        
+
         public Expression<Func<ApplicationUser, TResponse>> CreateExpression<TResponse>(Func<ApplicationUser, TResponse> func);
 
         public IQueryable<GetSelleProductsResponseDto> FilterSellerProduct(string sellerId, string? searchTerm);
@@ -35,5 +34,6 @@ namespace Services.SellerServices
 
         public Task<bool> EmailIsExist(string Email);
 
+        public Task<ProductListing> GetSellerProductById(string ProductID);
     }
 }

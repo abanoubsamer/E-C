@@ -11,13 +11,16 @@ namespace Services.FileSystemServices
 {
     public interface IFileServices
     {
+        public Task<FileSystemResult> AddImageAsync(string path, IFormFile file, bool isMain = false);
 
-        public Task<FileSystemResult> AddImageAsync(string path, IFormFile file);
         public Task<FileSystemResult> DeleteImageAsync(string path, string? Folder = null);
+
         public Task<FileSystemResult> AddRangeImageAsync(string path, List<IFormFile> files);
-        public Task<FileSystemResult> UpdateImage(string OldImage,string path, IFormFile file);
+
+        public Task<FileSystemResult> AddRangeImageProductAsync(string path, IFormFile Main, List<IFormFile> files);
+
+        public Task<FileSystemResult> UpdateImage(string OldImage, string path, IFormFile file);
+
         public Task<FileSystemResult> DeleteRangeImageAsync(List<string> path);
-
-
     }
 }

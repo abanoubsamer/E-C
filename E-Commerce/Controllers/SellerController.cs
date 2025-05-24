@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace E_Commerce.Controllers
 {
-
     [ApiController]
     public class SellerController : BasicController
     {
-        public SellerController(IMediator mediator) : base(mediator) { }
+        public SellerController(IMediator mediator) : base(mediator)
+        {
+        }
 
-     
         [HttpGet]
         [Route(Routing.Seller.GetSellers)]
         public async Task<IActionResult> Sellers([FromQuery] GetSellerPaginationModel query)
@@ -30,6 +30,13 @@ namespace E_Commerce.Controllers
             return Ok(await _Mediator.Send(new GetSellerByIdModel(Id)));
         }
 
+        [HttpGet]
+        [Route(Routing.Seller.GetSellerProductById)]
+        public async Task<IActionResult> GetSelleGetSellerProductByIdrsById(string Id)
+        {
+            return Ok(await _Mediator.Send(new GetsellerProductByIdModel(Id)));
+        }
+
         [HttpPost]
         [Route(Routing.Seller.SellerEamilIsExist)]
         public async Task<IActionResult> SellerEamilIsExist(SellerEmialIsExistModel model)
@@ -37,13 +44,11 @@ namespace E_Commerce.Controllers
             return Ok(await _Mediator.Send(model));
         }
 
-
         [HttpGet]
         [Route(Routing.Seller.GetSellersProducts)]
         public async Task<IActionResult> GetSellerProduct([FromQuery] GetSellerProductsModels model)
         {
             return Ok(await _Mediator.Send(model));
         }
-
     }
 }

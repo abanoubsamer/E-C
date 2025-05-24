@@ -2,6 +2,7 @@
 using Infrastructure.UnitOfWork;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SchoolWep.Data.Enums.Oredring;
 using Services.ExtinsionServies;
 using Services.FileSystemServices;
@@ -21,13 +22,15 @@ namespace Services.CategoryServices
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileServices _fileServices;
+        private readonly IMemoryCache _cache;
 
         #endregion Failds
 
         #region Constractor
 
-        public CategoryServices(IUnitOfWork unitOfWork, IFileServices fileServices)
+        public CategoryServices(IUnitOfWork unitOfWork, IMemoryCache cache, IFileServices fileServices)
         {
+            _cache = cache;
             _fileServices = fileServices;
             _unitOfWork = unitOfWork;
         }
@@ -93,6 +96,24 @@ namespace Services.CategoryServices
             }
         }
 
+        public async Task<List<Category>> GetAllCategoriesdAsync()
+        {
+            const string cacheKey = "AllCategories";
+
+            if (_cache.TryGetValue(cacheKey, out List<Category> cachedCategories))
+                return cachedCategories;
+
+            var result = await _unitOfWork.Repository<Category>().GetQueryable()
+                .Where(x => x.SubCategories.Any())
+                .Include(x => x.SubCategories)
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            _cache.Set(cacheKey, result, TimeSpan.FromHours(2));
+
+            return result;
+        }
+
         public IQueryable<Category> FilterCategory(string? CategoryName, OrederBy? orederBy)
         {
             var Query = GetQueryable();
@@ -120,7 +141,20 @@ namespace Services.CategoryServices
 
         public async Task<Category> GetCategoryById(string id)
         {
-            return await _unitOfWork.Repository<Category>().FindOneAsync(x => x.CategoryID == id);
+            if (string.IsNullOrWhiteSpace(id)) return null;
+
+            string cacheKey = $"Category_{id}";
+
+            if (_cache.TryGetValue(cacheKey, out Category cachedCategory))
+                return cachedCategory;
+
+            var category = await _unitOfWork.Repository<Category>()
+                .FindOneAsync(x => x.CategoryID == id);
+
+            if (category != null)
+                _cache.Set(cacheKey, category, TimeSpan.FromHours(1));
+
+            return category;
         }
 
         public async Task<List<Category>> GetParentCategories()

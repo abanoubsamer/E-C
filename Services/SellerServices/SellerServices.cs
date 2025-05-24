@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SchoolWep.Data.Enums.Oredring;
 using System.Linq.Expressions;
+using static Domain.MetaData.Routing;
 
 namespace Services.SellerServices
 {
@@ -103,8 +104,6 @@ namespace Services.SellerServices
                 query = query.Where(x =>
                     x.id.Contains(searchTerm) ||
                     x.name.Contains(searchTerm) ||
-                    x.descreption.Contains(searchTerm) ||
-                    x.category.Name.Contains(searchTerm) ||
                     x.price.ToString().Contains(searchTerm) ||
                     x.stock.ToString().Contains(searchTerm)
                 );
@@ -136,14 +135,14 @@ namespace Services.SellerServices
         private IQueryable<GetSelleProductsResponseDto> GetQueryableSellerProducts(string sellerid)
         {
             var reviewsQuery = _unitOfWork.Repository<Domain.Models.Review>()
-                .GetQueryable()
-                .AsNoTracking()
-                .GroupBy(r => r.ProductID)
-                .Select(g => new
-                {
-                    ProductID = g.Key,
-                    AverageRating = g.Average(r => r.Rating)
-                });
+                 .GetQueryable()
+                 .AsNoTracking()
+                 .GroupBy(r => r.ProductID)
+                 .Select(g => new
+                 {
+                     ProductID = g.Key,
+                     AverageRating = g.Average(r => r.Rating)
+                 });
 
             return _unitOfWork.Repository<Domain.Models.ProductListing>()
                 .GetQueryable()
@@ -153,28 +152,14 @@ namespace Services.SellerServices
                 {
                     id = product.ProductID,
                     name = product.Name,
-                    descreption = product.Description,
-
                     price = product.Price,
                     stock = product.StockQuantity,
-
+                    mainImage = product.Images.FirstOrDefault(x => x.ImageUrl.StartsWith("main_")).ImageUrl ?? product.Images.FirstOrDefault().ImageUrl,
                     avaragarate = reviewsQuery
                         .Where(r => r.ProductID == product.ProductID)
                         .Select(r => (double?)r.AverageRating)
                         .FirstOrDefault() ?? 0,
-
-                    ProductImagesDto = product.Images.Select(x => new ProductImagesDto
-                    {
-                        id = x.ImageID,
-                        Image = x.ImageUrl,
-                    }).ToList(),
-
-                    category = new CategoryDto
-                    {
-                        Id = product.Product.Category.CategoryID,
-                        Name = product.Product.Category.Name
-                    },
-                });
+                }).OrderBy(x => x.name);
         }
 
         private IQueryable<ApplicationUser> GetQueryable()
@@ -185,9 +170,15 @@ namespace Services.SellerServices
                 .Include(x => x.ShippingAddresses);
         }
 
-        public async Task<Seller> GetSellerById(string sellerId)
+        public async Task<ProductListing> GetSellerProductById(string ProductID)
         {
-            return await _unitOfWork.Repository<Seller>().FindOneWithNoTrackingAsync(x => x.SellerID == sellerId);
+            return await _unitOfWork.Repository<ProductListing>()
+             .FindOneWithNoTrackingAsync(x => x.ProductID == ProductID);
+        }
+
+        public async Task<Domain.Models.Seller> GetSellerById(string sellerId)
+        {
+            return await _unitOfWork.Repository<Domain.Models.Seller>().FindOneWithNoTrackingAsync(x => x.SellerID == sellerId);
         }
     }
 }

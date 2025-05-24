@@ -28,16 +28,16 @@ namespace Core.Mapping.Order
 
         public void GetUserOrders()
         {
-
             CreateMap<Domain.Models.Order, GetUserOrdersResponse>()
                 .ForMember(des => des.OrderID, opt => opt.MapFrom(src => src.OrderID))
                 .ForMember(des => des.OrderDate, opt => opt.MapFrom(src => src.OrderDate.ToString()))
                 .ForMember(des => des.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount))
                 .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status))
-                .ForMember(des => des.Phone, opt => opt.MapFrom(src => new PhoneNumberDto { 
+                .ForMember(des => des.Phone, opt => opt.MapFrom(src => new PhoneNumberDto
+                {
                     id = src.UserPhoneNumber.Id,
                     phoneNumber = src.UserPhoneNumber.PhoneNumber
-                } ))
+                }))
 
                 .ForMember(des => des.shippingAddresses, opt => opt.MapFrom(src => src.ShippingAddress))
                 .ForMember(des => des.Payment, opt => opt.MapFrom(
@@ -48,18 +48,19 @@ namespace Core.Mapping.Order
                         PaymentMethod = src.Payment.PaymentMethod,
                         TransactionID = src.Payment.TransactionID
                     }))
-                .ForMember(des => des.OrderItems, opt => opt.MapFrom(src => src.OrderItems.
-                Select(x => new GetOrderItemsWithOrderDto
-                {
-                    Price = x.Price,
-                    ProductID = x.ProductID,
-                    Quantity = x.Quantity,
-                    ImagesDto = x.Product.Images.Select(x => x.ImageUrl).FirstOrDefault(),
-                    Name = x.Product.Name,
-                   
-                }).ToList()
-                ));
+                 .ForMember(dest => dest.OrderItems, opt => opt.Ignore())
+                    .AfterMap((src, dest) =>
+                    {
+                        dest.OrderItems = src.OrderItems.Select(x => new GetOrderItemsWithOrderDto
+                        {
+                            Price = x.Price,
+                            ProductID = x.ProductID,
+                            Quantity = x.Quantity,
+                            ImagesDto = x.Product?.Images
+                                ?.FirstOrDefault(img => img.ImageUrl.StartsWith("main_"))?.ImageUrl ?? x.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                            Name = x.Product?.Name
+                        }).ToList();
+                    });
         }
-
     }
 }

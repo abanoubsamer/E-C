@@ -18,38 +18,38 @@ namespace Core.Pagination
         public bool HasNextPage => CurrentPage < TotalPage;
         public List<string> Messages { get; set; } = new();
         public bool Succeeded { get; set; }
-        
-        
+
+        public PaginationResult() // ✅ Constructor افتراضي
+        {
+            Data = new List<T>();
+            Meta = null;
+        }
+
         public PaginationResult(List<T> data)
         {
-            Data = data;         
+            Data = data;
         }
 
         internal PaginationResult(
             bool succeeded,
-            List<T>data = default,
+            List<T> data = default,
             List<string> msg = null,
             int count = 0,
-            int page= 1 ,
-            int pagesize= 10
+            int page = 1,
+            int pagesize = 10
             )
         {
-        
             Data = data;
             CurrentPage = page;
             Succeeded = succeeded;
             PageSize = pagesize;
             TotalPage = (int)Math.Ceiling(count / (double)pagesize);
             TotalCount = count;
-
         }
-
 
         public static PaginationResult<T> Success(List<T> Data, int count, int page, int pageszie)
         {
             return new PaginationResult<T>(true, Data, null, count, page, pageszie);
         }
-
-
     }
 }

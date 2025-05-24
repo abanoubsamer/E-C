@@ -6,6 +6,7 @@ using Domain.MetaData;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace E_Commerce.Controllers
 {
@@ -17,10 +18,10 @@ namespace E_Commerce.Controllers
         }
 
         [HttpGet]
-        [Route(Routing.Category.Pagination)]
-        public async Task<IActionResult> ListPagination([FromQuery] GetCategoryPagination query)
+        [Route(Routing.Category.All)]
+        public async Task<IActionResult> ListPagination()
         {
-            return Ok(await _Mediator.Send(query));
+            return Ok(await _Mediator.Send(new GetCategorys()));
         }
 
         [HttpGet]

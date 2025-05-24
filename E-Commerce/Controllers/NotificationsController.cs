@@ -1,4 +1,5 @@
 ﻿using Core.Meditor.Notification.Commend.Models;
+using Core.Meditor.Notification.Queires.Models;
 using Couerses.Basic;
 using Domain.MetaData;
 using Domain.Models;
@@ -14,11 +15,24 @@ namespace E_Commerce.Controllers
     [ApiController]
     public class NotificationsController : BasicController
     {
-       
-
-        public NotificationsController(IMediator mediator):base(mediator)
+        public NotificationsController(IMediator mediator) : base(mediator)
         {
-         
+        }
+
+        //GetNotifications
+
+        [HttpGet]
+        [Route(Routing.Notification.GetUserNotification)]
+        public async Task<IActionResult> GetNotificationsUser(string Id)
+        {
+            return NewResult(await _Mediator.Send(new GetUserNotificationsModel(Id)));
+        }
+
+        [HttpGet]
+        [Route(Routing.Notification.GetSellerNotification)]
+        public async Task<IActionResult> GetSellerNotification(string Id)
+        {
+            return NewResult(await _Mediator.Send(new GetSellerNotification(Id)));
         }
 
         [HttpPost]
@@ -27,14 +41,13 @@ namespace E_Commerce.Controllers
         {
             return NewResult(await _Mediator.Send(request));
         }
-        
+
         [HttpPost]
         [Route(Routing.Notification.SetNotificationTokenTopic)]
         public async Task<IActionResult> SubscribeToTopic(SubscribeToTopicModelCommend model)
         {
-            return NewResult(await _Mediator.Send(model)); 
+            return NewResult(await _Mediator.Send(model));
         }
-
 
         [HttpPost]
         [Route(Routing.Notification.SendNotificationToUser)]
@@ -49,8 +62,5 @@ namespace E_Commerce.Controllers
         {
             return NewResult(await _Mediator.Send(model));
         }
-
     }
-   
-
 }

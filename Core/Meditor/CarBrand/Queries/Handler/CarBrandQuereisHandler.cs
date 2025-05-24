@@ -14,7 +14,8 @@ using System.Threading.Tasks;
 namespace Core.Meditor.CarBrand.Queries.Handler
 {
     public class CarBrandQuereisHandler : ResponseHandler,
-        IRequestHandler<GetCarBrandsModelWithPagtionation, PaginationResult<GetCarBrandResponse>>
+        IRequestHandler<GetCarBrandsModelWithPagtionation, PaginationResult<GetCarBrandResponse>>,
+        IRequestHandler<GetCarBrandByIdModel, Response<GetCarBrandByIdResponse>>
     {
         private readonly ICarBrandServices carBrandServices;
 
@@ -26,15 +27,26 @@ namespace Core.Meditor.CarBrand.Queries.Handler
         public async Task<PaginationResult<GetCarBrandResponse>> Handle(GetCarBrandsModelWithPagtionation request, CancellationToken cancellationToken)
         {
             var expression = carBrandServices.Expression(x => new GetCarBrandResponse(x));
-            var filter = carBrandServices.GetCarBrand();
-            var paginationList = await filter.Select(expression).ToPaginationListAsync(request.PageNumber, request.PageSize);
-            paginationList.Meta = new
+            var brands = await carBrandServices.GetCarBrandsPagedCachedAsync(request.PageNumber, request.PageSize);
+
+            var paginationList = new PaginationResult<GetCarBrandResponse>
             {
-                Count = paginationList.Data.Count(),
-                Date = DateTime.Now.ToShortDateString()
+                Data = brands.Select(expression.Compile()).ToList(),
+                Meta = new
+                {
+                    Count = brands.Count,
+                    Date = DateTime.Now.ToShortDateString()
+                }
             };
 
             return paginationList;
+        }
+
+        public async Task<Response<GetCarBrandByIdResponse>> Handle(GetCarBrandByIdModel request, CancellationToken cancellationToken)
+        {
+            return await carBrandServices.GetCarBrandById(request.Id) is { } carBrand
+                ? Success(new GetCarBrandByIdResponse(carBrand))
+                : NotFound<GetCarBrandByIdResponse>($"Not Found Car Brand With Id: {request.Id}");
         }
     }
 }

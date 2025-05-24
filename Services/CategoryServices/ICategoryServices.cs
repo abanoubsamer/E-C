@@ -23,5 +23,7 @@ namespace Services.CategoryServices
         public Expression<Func<Category, TResponse>> CreateExpression<TResponse>(Func<Category, TResponse> func);
 
         public IQueryable<Category> FilterCategory(string? CategoryName, OrederBy? orederBy);
+
+        public Task<List<Category>> GetAllCategoriesdAsync();
     }
 }

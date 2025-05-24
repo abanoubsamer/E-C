@@ -4,8 +4,10 @@ using Domain.Dtos;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
 namespace Core.Meditor.Product.Commend.Models
@@ -22,6 +24,8 @@ namespace Core.Meditor.Product.Commend.Models
 
         public List<IFormFile> FormImages { get; set; } = new List<IFormFile>();
 
+        public IFormFile MainImage { get; set; }
+
         public int StockQuantity { get; set; }
 
         public string SellerID { get; set; }
@@ -29,5 +33,7 @@ namespace Core.Meditor.Product.Commend.Models
         public string CategoryID { get; set; }
 
         public string SKU { get; set; }
+
+        public List<ModelCompatibilityDto>? modelCompatibilityDtos { get; set; }
     }
 }

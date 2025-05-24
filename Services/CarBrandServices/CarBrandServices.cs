@@ -1,6 +1,8 @@
 ﻿using Domain.Models;
 using Infrastructure.UnitOfWork;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Services.FileSystemServices;
 using Services.Result;
 using System;
@@ -17,10 +19,13 @@ namespace Services.CarBrandServices
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IFileServices fileServices;
+        private readonly IMemoryCache _cache;
 
-        public CarBrandServices(IUnitOfWork unitOfWork, IFileServices fileServices)
+        public CarBrandServices(IUnitOfWork unitOfWork, IMemoryCache cache, IFileServices fileServices)
         {
             this.unitOfWork = unitOfWork;
+            _cache = cache;
+
             this.fileServices = fileServices;
         }
 
@@ -65,14 +70,41 @@ namespace Services.CarBrandServices
             return unitOfWork.Repository<CarBrand>().GetQueryable();
         }
 
+        public async Task<CarBrand> GetCarBrandById(string id)
+        {
+            string cacheKey = $"CarBrand_Id_{id}";
+
+            if (_cache.TryGetValue(cacheKey, out CarBrand cached))
+                return cached;
+
+            var brand = await unitOfWork.Repository<CarBrand>().FindOneAsync(x => x.Id == id);
+
+            if (brand != null)
+            {
+                _cache.Set(cacheKey, brand, TimeSpan.FromMinutes(30));
+            }
+
+            return brand;
+        }
+
+        public async Task<List<CarBrand>> GetCarBrandsPagedCachedAsync(int pageNumber, int pageSize)
+        {
+            string cacheKey = $"CarBrands_Page_{pageNumber}_Size_{pageSize}";
+
+            if (_cache.TryGetValue(cacheKey, out List<CarBrand> cachedList))
+                return cachedList;
+
+            var query = unitOfWork.Repository<CarBrand>().GetQueryable();
+            var result = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            _cache.Set(cacheKey, result, TimeSpan.FromHours(2));
+
+            return result;
+        }
+
         public Expression<Func<CarBrand, T>> Expression<T>(Func<CarBrand, T> expression)
         {
             return e => expression(e);
-        }
-
-        public async Task<CarBrand> GetCarBrandById(string id)
-        {
-            return await unitOfWork.Repository<CarBrand>().FindOneAsync(x => x.Id == id);
         }
 
         public async Task<ResultServices> UpdateCarBrand(CarBrand entity, IFormFile? image)

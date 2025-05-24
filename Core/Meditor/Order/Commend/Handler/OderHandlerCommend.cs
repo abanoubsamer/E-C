@@ -2,19 +2,27 @@
 using Core.Dtos;
 using Core.Meditor.Order.Commend.Models;
 using Core.Meditor.Order.Commend.Response;
+using Domain.Dtos.Product.Commend;
+using Domain.Enums.Notification;
 using Domain.Enums.Status;
 using Domain.Models;
+using Hangfire;
 using MediatR;
 using Newtonsoft.Json;
+using SchoolWep.Data.Enums.Oredring;
 using Services.CardServices;
+using Services.NotificationServices;
 using Services.OderServices;
 using Services.PaymentServices;
+using Services.ProductServices;
+using Services.Result;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Domain.MetaData.Routing;
 
 namespace Core.Meditor.Order.Commend.Handler
 {
@@ -29,19 +37,29 @@ namespace Core.Meditor.Order.Commend.Handler
         #region Filads
 
         private readonly IOrderServices _orderServices;
+        private readonly IProductServices productServices;
         private readonly ICardServices _cardServices;
-
+        private readonly IOrderBuilderService _orderBuilderService;
         private readonly IPaymentServices _paymentServices;
+        private readonly INotificationServices _notificationService;
 
         #endregion Filads
 
         #region Constractor
 
-        public OderHandlerCommend(IOrderServices orderServices, ICardServices cardServices, IPaymentServices paymentServices)
+        public OderHandlerCommend(IOrderServices orderServices,
+            IOrderBuilderService orderBuilderService,
+            IProductServices productServices,
+            ICardServices cardServices,
+            IPaymentServices paymentServices,
+            INotificationServices notificationServices)
         {
+            _orderBuilderService = orderBuilderService;
             _cardServices = cardServices;
+            _notificationService = notificationServices;
             _paymentServices = paymentServices;
             _orderServices = orderServices;
+            this.productServices = productServices;
         }
 
         #endregion Constractor
@@ -91,8 +109,56 @@ namespace Core.Meditor.Order.Commend.Handler
         public async Task<Response<string>> Handle(UpdateStatusOrderModelCommend request, CancellationToken cancellationToken)
         {
             var result = await _orderServices.UpdateStatusOrder(request.OrderId, request.ProductID, request.Status);
-            if (!result.Succesd) return BadRequest<string>(result.Msg);
-            return Updated<string>("Succesd Update Status Order");
+
+            if (!result.Succesd)
+                return BadRequest<string>(result.Msg);
+
+            var orderItem = result.OrderItem;
+            if (orderItem == null || orderItem.Seller == null || orderItem.Seller.User == null)
+            {
+                return BadRequest<string>("Invalid order item or seller information.");
+            }
+
+            var notificationResult = new ResultServices();
+            string message;
+
+            switch (orderItem.Status)
+            {
+                case OrderItemStatus.Confirm:
+                    message = $"Order #{orderItem.OrderID} has been confirmed by seller {orderItem.Seller.User.Name}.";
+                    notificationResult = await _notificationService.SendRelaTimeNotificationAsync(orderItem.Order.UserID, message, "Confirm Order", NotificationReceiverType.User);
+                    break;
+
+                case OrderItemStatus.Shipped:
+                    message = $"Order #{orderItem.OrderID} has been shipped by seller {orderItem.Seller.User.Name}.";
+                    notificationResult = await _notificationService.SendRelaTimeNotificationAsync(orderItem.Order.UserID, message, "Shipped Order", NotificationReceiverType.User);
+                    break;
+
+                case OrderItemStatus.Delivered:
+                    message = $"Order #{orderItem.OrderID} has been delivered by seller {orderItem.Seller.User.Name}.";
+                    notificationResult = await _notificationService.SendRelaTimeNotificationAsync(orderItem.Order.UserID, message, "Delivered Order", NotificationReceiverType.User);
+                    break;
+
+                case OrderItemStatus.Cancelled:
+                    message = $"Order #{orderItem.OrderID} has been cancelled by seller {orderItem.Seller.User.Name}.\n" +
+                        $" Because {request.cancellationReason}.";
+                    notificationResult = await _notificationService.SendRelaTimeNotificationAsync(orderItem.Order.UserID, message, "Cancelled Order", NotificationReceiverType.User);
+                    break;
+
+                default:
+                    message = $"Order #{orderItem.OrderID} status updated to {orderItem.Status} by seller {orderItem.Seller.User.Name}.";
+                    notificationResult = await _notificationService.SendRelaTimeNotificationAsync(orderItem.Order.UserID, message, "Order Update", NotificationReceiverType.User);
+                    break;
+            }
+
+            await _notificationService.SendUserNotificationAsync(orderItem.Order.UserID, "Order Update", message);
+
+            if (!notificationResult.Succesd)
+            {
+                return BadRequest<string>(notificationResult.Msg);
+            }
+
+            return Updated<string>("Order status updated successfully and notification sent.");
         }
 
         public async Task<Response<string>> Handle(ConfimPaymentOrderModelCommend request, CancellationToken cancellationToken)
@@ -150,50 +216,62 @@ namespace Core.Meditor.Order.Commend.Handler
 
         public async Task<Response<string>> Handle(AddOrderTestModel request, CancellationToken cancellationToken)
         {
-            var order = new Domain.Models.Order
+            try
             {
-                OrderID = Guid.NewGuid().ToString(),
-                UserID = request.UserID,
-                OrderDate = DateTime.Now,
-                AddressId = request.shippingAddressId,
-                PhoneId = request.phoneNumberId,
-                TotalAmount = request.paymentMethod.Amount,
-            };
-            var orderItems = new List<Domain.Models.OrderItem>();
-
-            foreach (var item in request.orderItems)
-            {
-                var price = await _orderServices.GetTotalAmountProduct(item.ProductID, item.Quantity);
-                var sellerId = await _orderServices.GetsellerIdWithProductId(item.ProductID);
-
-                orderItems.Add(new Domain.Models.OrderItem
+                var Mapp = new Domain.Models.Order
                 {
-                    OrderID = order.OrderID,
-                    ProductID = item.ProductID,
-                    Quantity = item.Quantity,
-                    Price = price,
-                    SellerID = sellerId,
-                    Status = OrderItemStatus.Pending,
-                });
+                    AddressId = request.shippingAddressId,
+                    PhoneId = request.phoneNumberId,
+                    UserID = request.UserID,
+                    Payment = new Domain.Models.Payment
+                    {
+                        UserID = request.UserID,
+                        TransactionID = request.paymentMethod.TransactionID,
+
+                        PaymentMethod = request.paymentMethod.PaymentMethod,
+                        Amount = request.paymentMethod.Amount
+                    },
+                    OrderItems = request.orderItems.Select(x => new Domain.Models.OrderItem
+                    {
+                        ProductID = x.ProductID,
+                        Quantity = x.Quantity,
+                    }).ToList()
+                };
+
+                var (order, result) = await _orderBuilderService.BuildOrderAsync(Mapp);
+                if (!result.Succesd) return BadRequest<string>(result.Msg);
+
+                var resultOrder = await _orderServices.AddOrder(order);
+                if (!resultOrder.Succesd) return BadRequest<string>(resultOrder.Msg);
+
+                var resultDelete = await _cardServices.DeleteCardItemsUser(request.UserID);
+                if (!resultDelete.Succesd) return BadRequest<string>(resultDelete.Msg);
+
+                foreach (var item in order.OrderItems)
+                {
+                    var updateResult = await productServices.UpdateStockAsync(item.ProductID, item.Quantity);
+                    if (!updateResult.Succesd) return BadRequest<string>(updateResult.Msg);
+                }
+
+                var sellerIds = order.OrderItems.Select(x => x.Seller.UserID).Distinct();
+                string msg = $"New Order #{order.OrderID} has been placed by {order.UserID} and waiting for confirmation.";
+
+                foreach (var sellerId in sellerIds)
+                {
+                    await _notificationService.SendRelaTimeNotificationAsync(sellerId, msg, "New Order", NotificationReceiverType.Seller);
+                    await _notificationService.SendUserNotificationAsync(sellerId, "New Order", msg);
+                }
+
+                BackgroundJob.Schedule(() =>
+                                _orderServices.CancelOrderIfAllPendingAsync(order.OrderID),
+                                TimeSpan.FromHours(24));
+
+                return Created<string>("Confirm Payment Order");
             }
-
-            order.OrderItems = orderItems;
-
-            order.Payment = new Domain.Models.Payment
+            catch (Exception ex)
             {
-                OrderID = order.OrderID,
-                Amount = request.paymentMethod.Amount,
-                PaymentMethod = request.paymentMethod.PaymentMethod,
-                TransactionID = request.paymentMethod.TransactionID,
-                PaymentDate = DateTime.Now
-            };
-
-            var result = await _orderServices.AddOrder(order);
-            var resultDelete = await _cardServices.DeleteCardItemsUser(request.UserID);
-
-            if (!result.Succesd || !resultDelete.Succesd) return BadRequest<string>(result.Msg);
-
-            return Created<string>("Confime Payment Order");
+                return BadRequest<string>("An unexpected error occurred.");
+            }
         }
 
         #endregion Handler

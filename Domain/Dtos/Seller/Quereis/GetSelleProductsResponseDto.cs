@@ -10,13 +10,9 @@ namespace Domain.Dtos.Seller.Quereis
     {
         public string id { get; set; }
         public string name { get; set; }
-        public string descreption { get; set; }
- 
         public decimal price { get; set; }
         public int stock { get; set; }
         public double avaragarate { get; set; }
-        public List<ProductImagesDto> ProductImagesDto { get; set; }
- 
-        public CategoryDto category { get; set; }
+        public string mainImage { get; set; }
     }
 }

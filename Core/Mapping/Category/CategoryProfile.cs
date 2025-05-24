@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +10,12 @@ namespace Core.Mapping.Category
 {
     public partial class CategoryProfile : Profile
     {
-
         public CategoryProfile()
         {
             GetCategoryByIdMapping();
             UpdateCategoryMapping();
             AddCategoryMapping();
+            GetAllCategorys();
         }
-
     }
 }

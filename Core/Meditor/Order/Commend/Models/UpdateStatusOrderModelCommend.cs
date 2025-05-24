@@ -9,10 +9,11 @@ using System.Threading.Tasks;
 
 namespace Core.Meditor.Order.Commend.Models
 {
-    public class UpdateStatusOrderModelCommend:IRequest<Response<string>>
+    public class UpdateStatusOrderModelCommend : IRequest<Response<string>>
     {
-        public required string OrderId { get; set; }
-        public required string ProductID { get; set; }
-        public required OrderItemStatus Status { get; set; }
+        public string OrderId { get; set; }
+        public string ProductID { get; set; }
+        public OrderItemStatus Status { get; set; }
+        public string? cancellationReason { get; set; }
     }
 }

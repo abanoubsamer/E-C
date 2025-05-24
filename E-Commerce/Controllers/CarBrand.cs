@@ -23,6 +23,14 @@ namespace E_Commerce.Controllers
             return Ok(await _Mediator.Send(model));
         }
 
+        [HttpGet]
+        [Route(Routing.CarBrand.GetById)]
+        public async Task<IActionResult> GetCarBrandBy(string Id)
+        {
+            return NewResult(await _Mediator.Send(new GetCarBrandByIdModel(Id)));
+        }
+
+        //GetCarBrandByIdModel
         [HttpPost]
         [Route(Routing.CarBrand.Create)]
         public async Task<IActionResult> Create([FromForm] AddCarBrandModel model)

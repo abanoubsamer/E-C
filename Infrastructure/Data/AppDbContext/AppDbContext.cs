@@ -34,15 +34,12 @@ namespace Infrastructure.Data.AppDbContext
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<UserPhoneNumber> UserPhoneNumbers { get; set; }
-
         public DbSet<Review> Reviews { get; set; }
         public DbSet<ShippingAddress> ShippingAddresses { get; set; }
         public DbSet<Payment> Payments { get; set; }
-
         public DbSet<CarBrand> CarBrands { get; set; }
-
         public DbSet<ModelCompatibility> ModelCompatibilitys { get; set; }
-
         public DbSet<Models> Models { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

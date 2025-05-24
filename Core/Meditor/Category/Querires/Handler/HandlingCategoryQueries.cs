@@ -17,51 +17,40 @@ using System.Threading.Tasks;
 namespace Core.Meditor.Category.Querires.Handler
 {
     public class HandlingCategoryQueries : ResponseHandler,
-        IRequestHandler<GetCategoryPagination, PaginationResult<GetCategoryPaginagtionResponseQueries>>,
+        IRequestHandler<GetCategorys, Response<List<GetCategoryResponseQueries>>>,
         IRequestHandler<GetCtegoryByIdModelQueries, Response<GetCategoryByIdResponse>>,
         IRequestHandler<GetParentCategoriesModel, Response<List<GetCategoriesResponse>>>,
         IRequestHandler<GetSubcategoriesModel, Response<List<GetCategoriesResponse>>>
-     
+
     {
         #region Failds
+
         private readonly ICategoryServices _categoryServices;
         private readonly IMapper _mapper;
-        #endregion
+
+        #endregion Failds
 
         #region Constractor
+
         public HandlingCategoryQueries(ICategoryServices categoryServices, IMapper mapper)
         {
             _mapper = mapper;
             _categoryServices = categoryServices;
         }
-        #endregion
 
+        #endregion Constractor
 
         #region Handling
-        public async Task<PaginationResult<GetCategoryPaginagtionResponseQueries>> Handle(GetCategoryPagination request, CancellationToken cancellationToken)
-        {
-            var expression = _categoryServices.CreateExpression(x => new GetCategoryPaginagtionResponseQueries(x));
-            var Filter = _categoryServices.FilterCategory(request.CategoryName, request.OrederBy);
-            var PaginationList = await Filter.Select(expression).ToPaginationListAsync(request.PageNumber, request.PageSize);
-            PaginationList.Meta = new
-            {
-                Count = PaginationList.Data.Count(),
-                Date = DateTime.Now.ToShortDateString()
-            };
-
-            return PaginationList;
-        }
 
         public async Task<Response<GetCategoryByIdResponse>> Handle(GetCtegoryByIdModelQueries request, CancellationToken cancellationToken)
         {
             if (request._id.IsNullOrEmpty()) return BadRequest<GetCategoryByIdResponse>("Invalid Id");
-            
+
             var cat = await _categoryServices.GetCategoryById(request._id);
-            
-            if(cat == null ) return NotFound<GetCategoryByIdResponse>("Not Found Category");
+
+            if (cat == null) return NotFound<GetCategoryByIdResponse>("Not Found Category");
 
             var CatMapping = _mapper.Map<GetCategoryByIdResponse>(cat);
-           
 
             return Success(CatMapping);
         }
@@ -93,8 +82,16 @@ namespace Core.Meditor.Category.Querires.Handler
 
             return Success(mapping);
         }
-        #endregion
 
+        public async Task<Response<List<GetCategoryResponseQueries>>> Handle(GetCategorys request, CancellationToken cancellationToken)
+        {
+            var cat = await _categoryServices.GetAllCategoriesdAsync();
 
+            var Mapping = _mapper.Map<List<GetCategoryResponseQueries>>(cat);
+
+            return Success(Mapping);
+        }
+
+        #endregion Handling
     }
 }

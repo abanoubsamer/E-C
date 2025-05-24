@@ -2,6 +2,7 @@
 using Core.Basic;
 using Core.Meditor.Product.Commend.Models;
 using Domain.Models;
+using Hangfire;
 using MediatR;
 using Services.FileSystemServices;
 using Services.ProductServices;
@@ -38,8 +39,15 @@ namespace Core.Meditor.Product.Commend.Handleing
 
             if (ProductMapping == null) return BadRequest<string>("Product Invald");
 
-            var result = await _productServices.AddProductAsync(ProductMapping, request.CategoryID, request.FormImages);
-            if (result.Succesd) return Created(result.Msg);
+            var result = await _productServices.AddProductAsync(ProductMapping, request.CategoryID, request.MainImage, request.FormImages);
+
+            if (result.Succesd)
+            {
+                BackgroundJob.Schedule(() =>
+                 _productServices.SendWeeklyReminderAndStartRecurring(ProductMapping.ProductID),
+                 TimeSpan.FromDays(7));
+                return Created(result.Msg);
+            }
 
             return BadRequest<string>(result.Msg);
         }
@@ -51,7 +59,7 @@ namespace Core.Meditor.Product.Commend.Handleing
 
             product = _mapper.Map(request, product);
 
-            var result = await _productServices.UpdateProductAsync(product, request.FormImages, request.IdIamgesDelteted);
+            var result = await _productServices.UpdateProductAsync(product, request.MainImages, request.FormImages, request.IdIamgesDelteted);
             if (!result.Succesd) return UnprocessableEntity<string>(result.Msg);
 
             return Updated<string>("Succesed Update Product");

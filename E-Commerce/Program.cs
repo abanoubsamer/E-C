@@ -1,17 +1,13 @@
 ﻿using Core;
-using Core.ApiInterface;
 using Core.Middleware;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
+using Domain.Hubs;
 using Hangfire;
-
 using Infrastructure;
 using Microsoft.OpenApi.Models;
 using Services;
-using Services.NotificationServices;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,7 +35,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://127.0.0.1:5500") // السماح فقط لهذا الأصل
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5500") // السماح فقط لهذا الأصل
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -107,5 +103,7 @@ app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

@@ -1,4 +1,5 @@
 ﻿using Domain.Dtos;
+using Domain.Enums.Notification;
 using Domain.Enums.Oredring;
 using Domain.Enums.Status;
 using Domain.Models;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SchoolWep.Data.Enums.Oredring;
 using Services.ExtinsionServies;
+using Services.NotificationServices;
 using Services.PaymentServices;
 using Services.Result;
 using System.IdentityModel.Tokens.Jwt;
@@ -26,13 +28,15 @@ namespace Services.OderServices
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentServices _paymentService;
         private readonly IOptions<JwtOptions> _jwtOptions;
+        private readonly INotificationServices _notificationService;
 
         #endregion Fialds
 
         #region Constractor
 
-        public OrderServices(IUnitOfWork unitOfWork, IOptions<JwtOptions> jwtOptions, IPaymentServices paymentService)
+        public OrderServices(INotificationServices notificationServices, IUnitOfWork unitOfWork, IOptions<JwtOptions> jwtOptions, IPaymentServices paymentService)
         {
+            _notificationService = notificationServices;
             _jwtOptions = jwtOptions;
             _paymentService = paymentService;
             _unitOfWork = unitOfWork;
@@ -73,24 +77,28 @@ namespace Services.OderServices
             return product.Price * Quantity;
         }
 
-        public async Task<ResultServices> UpdateStatusOrder(string OrderId, string productId, OrderItemStatus Status)
+        public async Task<ResultUpdateStatusOrder> UpdateStatusOrder(string OrderId, string productId, OrderItemStatus Status)
         {
-            if (OrderId == null) return new ResultServices { Msg = "Invalid OrderId" };
+            if (OrderId == null) return new ResultUpdateStatusOrder { Msg = "Invalid OrderId" };
 
             try
             {
                 var order = await _unitOfWork.Repository<OrderItem>().FindOneAsync(x => x.OrderID == OrderId && x.ProductID == productId); ;
 
-                if (order == null) return new ResultServices { Msg = $"Not Found Order With Id {OrderId}" };
+                if (order == null) return new ResultUpdateStatusOrder { Msg = $"Not Found Order With Id {OrderId}" };
 
+                if (order.Status >= Status)
+                {
+                    return new ResultUpdateStatusOrder { Msg = $"The order status is already {order.Status}, cannot update to {Status}" };
+                }
                 order.Status = Status;
 
                 await _unitOfWork.Repository<OrderItem>().UpdateAsync(order);
-                return new ResultServices { Succesd = true };
+                return new ResultUpdateStatusOrder { Succesd = true, OrderItem = order };
             }
             catch (Exception ex)
             {
-                return new ResultServices { Msg = ex.Message };
+                return new ResultUpdateStatusOrder { Msg = ex.Message };
             }
         }
 
@@ -404,14 +412,49 @@ namespace Services.OderServices
             return orders;
         }
 
-        public async Task<string> GetsellerIdWithProductId(string ProductId)
+        public async Task<Seller> GetsellerIdWithProductId(string ProductId)
         {
             var Product = await _unitOfWork.Repository<ProductListing>().FindOneAsync(x => x.ProductID == ProductId);
-            return Product.SellerID;
+            return Product.Seller;
         }
 
-        #endregion Seller
+        public async Task CancelOrderIfAllPendingAsync(string orderId)
+        {
+            var order = await _unitOfWork.Repository<Order>().FindOneAsync(x => x.OrderID == orderId);
 
-        #endregion Implemntation
+            if (order == null) return;
+
+            var pendingItems = order.OrderItems.Where(x => x.Status == OrderItemStatus.Pending).ToList();
+
+            if (!pendingItems.Any()) return;
+
+            var canceledProductNames = new List<string>();
+
+            foreach (var item in pendingItems)
+            {
+                item.Status = OrderItemStatus.Cancelled;
+                canceledProductNames.Add(item.Product.Name);
+
+                await _notificationService.SendUserNotificationAsync(item.SellerID,
+                    "Order Item Cancelled",
+                    $"Product '{item.Product.Name}' from Order #{orderId} was cancelled because it was not confirmed within 24 hours.");
+                await _notificationService.SendRelaTimeNotificationAsync(item.SellerID, $"Product '{item.Product.Name}' from Order #{orderId} was cancelled because it was not confirmed within 24 hours."
+                   , "Order Item Cancelled", NotificationReceiverType.Seller);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            string message = $"The following items from your order #{orderId} were cancelled because the sellers did not confirm them within 24 hours:\n" +
+                             string.Join("\n- ", canceledProductNames);
+
+            await _notificationService.SendUserNotificationAsync(order.UserID,
+                "Order Items Cancelled",
+                message);
+            await _notificationService.SendRelaTimeNotificationAsync(order.UserID, message, "Order Item Cancelled", NotificationReceiverType.Seller);
+        }
     }
+
+    #endregion Seller
+
+    #endregion Implemntation
 }

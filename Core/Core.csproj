@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Folder Include="Mapping\Models\Commend\" />
+    <Folder Include="Mapping\Notification\Commend\" />
     <Folder Include="Mapping\Order\Commend\" />
     <Folder Include="Mapping\Review\Queries\" />
     <Folder Include="Mapping\Seller\Commend\" />

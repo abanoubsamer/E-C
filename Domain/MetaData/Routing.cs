@@ -11,6 +11,7 @@ namespace Domain.MetaData
         public const string SingelId = "{Id}";
         public const string SingelName = "{Name}";
         public const string EmailName = "{Email}";
+        public const string Text = "{Text}";
         public const string Root = "Api";
         public const string Version = "V1";
         public const string Role = Root + "/" + Version + "/";
@@ -20,6 +21,7 @@ namespace Domain.MetaData
             public const string Prefix = Role + "Product/";
             public const string List = Prefix + "List";
             public const string GetMaster = Prefix + "GetMaster/" + SingelId;
+            public const string AutoCompleteSearch = Prefix + "AutoCompleteSearch/" + Text;
             public const string Add = Prefix + "Add";
             public const string Update = Prefix + "Update";
             public const string Pagination = Prefix + "Pagination";
@@ -32,6 +34,7 @@ namespace Domain.MetaData
         {
             public const string Prefix = Role + "CarBrand/";
             public const string Create = Prefix + "Create";
+            public const string GetById = Prefix + SingelId;
             public const string Pagination = Prefix + "Pagination";
         }
 
@@ -72,7 +75,7 @@ namespace Domain.MetaData
             public const string Prefix = Role + "Category/";
             public const string Add = Prefix + "Add";
             public const string Update = Prefix + "Update";
-            public const string Pagination = Prefix + "Pagination";
+            public const string All = Prefix + "All";
             public const string Delete = Prefix + SingelId;
             public const string GetById = Prefix + SingelId;
             public const string GetParent = Prefix + "parents";
@@ -142,6 +145,7 @@ namespace Domain.MetaData
             public const string GetSellers = Prefix + "GetSellers";
             public const string GetSellersById = Prefix + SingelId;
             public const string GetSellersProducts = Prefix + "GetSellersProducts";
+            public const string GetSellerProductById = Prefix + "GetSellerProductById/" + SingelId;
             public const string SellerEamilIsExist = Prefix + "SellerEamilIsExist";
         }
 
@@ -155,6 +159,8 @@ namespace Domain.MetaData
         {
             public const string Prefix = Role + "Notification/";
             public const string SetNotificationTokenTopic = Prefix + "SetNotificationTokenTopic";
+            public const string GetUserNotification = Prefix + "GetUserNotification/" + SingelId;
+            public const string GetSellerNotification = Prefix + "GetSellerNotification/" + SingelId;
             public const string SetTokenNotificationToUser = Prefix + "SetTokenNotificationToUser";
             public const string SendNotificationTopic = Prefix + "SendNotificationTopic";
             public const string SendNotificationToUser = Prefix + "SendNotificationToUser";

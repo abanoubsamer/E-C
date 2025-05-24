@@ -1,12 +1,14 @@
 ﻿using Domain;
 using Domain.Dtos.Product.Queries;
 using Domain.Models;
+using Hangfire;
 using Infrastructure.UnitOfWork;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SchoolWep.Data.Enums.Oredring;
 using Services.FileSystemServices;
+using Services.NotificationServices;
 using Services.Result;
 using System;
 using System.Collections.Generic;
@@ -24,13 +26,15 @@ namespace Services.ProductServices
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileServices _fileServices;
+        private readonly INotificationServices _notificationServices;
 
         #endregion Failds
 
         #region Constractor
 
-        public ProductServices(IUnitOfWork unitOfWork, IFileServices fileServices)
+        public ProductServices(IUnitOfWork unitOfWork, INotificationServices notificationServices, IFileServices fileServices)
         {
+            _notificationServices = notificationServices;
             _fileServices = fileServices;
             _unitOfWork = unitOfWork;
         }
@@ -39,7 +43,7 @@ namespace Services.ProductServices
 
         #region Implemntation
 
-        public async Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, List<IFormFile> images)
+        public async Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, IFormFile MainImage, List<IFormFile> images)
         {
             if (product == null)
             {
@@ -50,26 +54,18 @@ namespace Services.ProductServices
                 };
             }
 
-            var masterProduct = await _unitOfWork.Repository<ProductMaster>().FindOneAsync(p => p.SKU == product.SKU);
-            if (masterProduct == null)
-            {
-                masterProduct = new ProductMaster
-                {
-                    SKU = product.SKU,
-                    CategoryID = categoryID
-                };
-
-                // إضافة الـ ProductMaster إلى قاعدة البيانات
-                await _unitOfWork.Repository<ProductMaster>().AddAsync(masterProduct);
-                await _unitOfWork.SaveChangesAsync();
-            }
-            product.Product = masterProduct;
-
             using var transaction = await _unitOfWork.BeginTransactionAsync();
             var uploadResult = new FileSystemResult();
             try
             {
-                uploadResult = await _fileServices.AddRangeImageAsync("wwwroot/images", images);
+                var masterProduct = await _unitOfWork.Repository<ProductMaster>().FindOneAsync(p => p.SKU == product.SKU);
+
+                if (masterProduct == null)
+                {
+                    await _unitOfWork.Repository<ProductMaster>().AddAsync(product.Product);
+                }
+
+                uploadResult = await _fileServices.AddRangeImageProductAsync("wwwroot/images", MainImage, images);
 
                 if (uploadResult.Succesd && uploadResult.Data != null)
                 {
@@ -157,7 +153,7 @@ namespace Services.ProductServices
             return await _unitOfWork.Repository<ProductListing>().FindOneAsync(x => x.ProductID == Id);
         }
 
-        public async Task<ResultServices> UpdateProductAsync(ProductListing product, List<IFormFile>? Images, List<string>? IdImagesDeltetd)
+        public async Task<ResultServices> UpdateProductAsync(ProductListing product, IFormFile? MainImage, List<IFormFile>? Images, List<string>? IdImagesDeltetd)
         {
             if (product == null)
                 return new ResultServices() { Msg = "Product Is Null" };
@@ -170,13 +166,20 @@ namespace Services.ProductServices
                     .FindMoreAsync(x => x.ProductID == product.ProductID);
 
                 List<string> newImageUrls = new List<string>();
-
+                if (MainImage != null)
+                {
+                    var uploadResult = await _fileServices.AddImageAsync("wwwroot/images", MainImage, true);
+                    if (uploadResult.Succesd)
+                    {
+                        newImageUrls.Add(uploadResult.Msg);
+                    }
+                }
                 if (Images != null && Images.Any())
                 {
                     var uploadResult = await _fileServices.AddRangeImageAsync("wwwroot/images", Images);
                     if (uploadResult.Succesd && uploadResult.Data != null)
                     {
-                        newImageUrls = uploadResult.Data;
+                        newImageUrls.AddRange(uploadResult.Data);
                     }
                 }
 
@@ -310,6 +313,53 @@ namespace Services.ProductServices
             var master = await _unitOfWork.Repository<ProductMaster>().FindMoreAsNoTrackingAsync(x => x.SKU.Contains(SKU));
             if (master == null) return new List<ProductMasterDto>();
             return master.Select(e => new ProductMasterDto { CategoryID = e.CategoryID, SKU = e.SKU }).ToList();
+        }
+
+        public async Task<List<string>> SearchProductAsync(string ProductName)
+        {
+            if (string.IsNullOrEmpty(ProductName))
+                return new List<string>();
+            var productResult = await _unitOfWork.Repository<ProductListing>().FindMoreAsNoTrackingAsync(x => x.Name.Contains(ProductName));
+            return productResult.Select(x => x.Name).ToList();
+        }
+
+        public async Task<bool> CheckStockAsync(string Id, int Quantity)
+        {
+            return await _unitOfWork.Repository<ProductListing>()
+                .AnyAsync(x => x.ProductID == Id && x.StockQuantity >= Quantity);
+        }
+
+        public async Task<ResultServices> UpdateStockAsync(string Id, int Quantity)
+        {
+            var IsAvailable = await _unitOfWork.Repository<ProductListing>()
+                 .AnyAsync(x => x.ProductID == Id && x.StockQuantity >= Quantity);
+            if (IsAvailable == false) return new ResultServices() { Succesd = false, Msg = "Product Stock Not Available" };
+
+            try
+            {
+                var product = await _unitOfWork.Repository<ProductListing>().FindOneAsync(x => x.ProductID == Id);
+
+                product.StockQuantity -= Quantity;
+
+                await _unitOfWork.Repository<ProductListing>().UpdateAsync(product);
+
+                return new ResultServices() { Succesd = true, Msg = "Product Stock Updated" };
+            }
+            catch (Exception ex)
+            {
+                return new ResultServices() { Succesd = false, Msg = ex.Message };
+            }
+        }
+
+        public async Task SendWeeklyReminderAndStartRecurring(string productId)
+        {
+            await _notificationServices.SendStockReminderNotificationAsync(productId);
+
+            string jobId = $"stock_reminder_{productId}";
+            RecurringJob.AddOrUpdate<INotificationServices>(
+                jobId,
+                x => x.SendStockReminderNotificationAsync(productId),
+                Cron.Weekly);
         }
 
         #endregion Implemntation
