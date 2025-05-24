@@ -11,6 +11,7 @@ namespace Domain.MetaData
         public const string SingelId = "{Id}";
         public const string SingelName = "{Name}";
         public const string EmailName = "{Email}";
+        public const string Text = "{Text}";
         public const string Root = "Api";
         public const string Version = "V1";
         public const string Role = Root + "/" + Version + "/";
@@ -20,6 +21,7 @@ namespace Domain.MetaData
             public const string Prefix = Role + "Product/";
             public const string List = Prefix + "List";
             public const string GetMaster = Prefix + "GetMaster/" + SingelId;
+            public const string AutoCompleteSearch = Prefix + "AutoCompleteSearch/" + Text;
             public const string Add = Prefix + "Add";
             public const string Update = Prefix + "Update";
             public const string Pagination = Prefix + "Pagination";
@@ -32,6 +34,7 @@ namespace Domain.MetaData
         {
             public const string Prefix = Role + "CarBrand/";
             public const string Create = Prefix + "Create";
+            public const string GetById = Prefix + SingelId;
             public const string Pagination = Prefix + "Pagination";
         }
 

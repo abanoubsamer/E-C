@@ -39,7 +39,7 @@ namespace Services.ProductServices
 
         #region Implemntation
 
-        public async Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, List<IFormFile> images)
+        public async Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, IFormFile MainImage, List<IFormFile> images)
         {
             if (product == null)
             {
@@ -69,7 +69,7 @@ namespace Services.ProductServices
             var uploadResult = new FileSystemResult();
             try
             {
-                uploadResult = await _fileServices.AddRangeImageAsync("wwwroot/images", images);
+                uploadResult = await _fileServices.AddRangeImageProductAsync("wwwroot/images", MainImage, images);
 
                 if (uploadResult.Succesd && uploadResult.Data != null)
                 {
@@ -157,7 +157,7 @@ namespace Services.ProductServices
             return await _unitOfWork.Repository<ProductListing>().FindOneAsync(x => x.ProductID == Id);
         }
 
-        public async Task<ResultServices> UpdateProductAsync(ProductListing product, List<IFormFile>? Images, List<string>? IdImagesDeltetd)
+        public async Task<ResultServices> UpdateProductAsync(ProductListing product, IFormFile? MainImage, List<IFormFile>? Images, List<string>? IdImagesDeltetd)
         {
             if (product == null)
                 return new ResultServices() { Msg = "Product Is Null" };
@@ -170,8 +170,15 @@ namespace Services.ProductServices
                     .FindMoreAsync(x => x.ProductID == product.ProductID);
 
                 List<string> newImageUrls = new List<string>();
-
-                if (Images != null && Images.Any())
+                if (MainImage != null)
+                {
+                    var uploadResult = await _fileServices.AddImageAsync("wwwroot/images", MainImage, true);
+                    if (uploadResult.Succesd)
+                    {
+                        newImageUrls.Add(uploadResult.Msg);
+                    }
+                }
+                else if (Images != null && Images.Any())
                 {
                     var uploadResult = await _fileServices.AddRangeImageAsync("wwwroot/images", Images);
                     if (uploadResult.Succesd && uploadResult.Data != null)
@@ -310,6 +317,14 @@ namespace Services.ProductServices
             var master = await _unitOfWork.Repository<ProductMaster>().FindMoreAsNoTrackingAsync(x => x.SKU.Contains(SKU));
             if (master == null) return new List<ProductMasterDto>();
             return master.Select(e => new ProductMasterDto { CategoryID = e.CategoryID, SKU = e.SKU }).ToList();
+        }
+
+        public async Task<List<string>> SearchProductAsync(string ProductName)
+        {
+            if (string.IsNullOrEmpty(ProductName))
+                return new List<string>();
+            var productResult = await _unitOfWork.Repository<ProductListing>().FindMoreAsNoTrackingAsync(x => x.Name.Contains(ProductName));
+            return productResult.Select(x => x.Name).ToList();
         }
 
         #endregion Implemntation

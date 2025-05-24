@@ -393,6 +393,8 @@ namespace Services.AuthenticationServices
                         }
                         return new AuthModelResult { Messgage = errors };
                     }
+                    await _UnitOfWork.Repository<Domain.Models.Card>()
+                       .AddAsync(new Domain.Models.Card { UserID = user.Id });
                     //comment
                     await _UnitOfWork.CommentAsync();
                     //Get Token

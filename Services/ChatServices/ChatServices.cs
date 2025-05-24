@@ -78,7 +78,7 @@ namespace Services.ChatServices
 
             var requestData = new RequestData
             {
-                model = "google/gemini-2.0-flash-exp:free",
+                model = "qwen/qwen2.5-vl-72b-instruct:free",
                 messages = new List<Message>
                 {
                     new Message { role = "system", content = "This is the chat history for context, but only respond to the last message." }
@@ -126,7 +126,7 @@ namespace Services.ChatServices
                     {
                         var messageContent = choicesArray[0]?["delta"]?["content"]?.ToString();
 
-                        if (!string.IsNullOrWhiteSpace(messageContent))
+                        if (messageContent != "")
                         {
                             yield return messageContent;
                         }

@@ -22,6 +22,8 @@ namespace Core.Meditor.Product.Commend.Models
 
         public List<IFormFile> FormImages { get; set; } = new List<IFormFile>();
 
+        public IFormFile MainImage { get; set; }
+
         public int StockQuantity { get; set; }
 
         public string SellerID { get; set; }

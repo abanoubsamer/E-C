@@ -38,6 +38,7 @@ namespace Core.Meditor.Model.Queires.Handler
             var model = await modelsServices.GetModelById(request.Id);
             if (model == null) return NotFound<GetModelResponse>();
             var mapping = mapper.Map<GetModelResponse>(model);
+            mapping.BrandImage = model.Brand.Image;
             return Success(mapping);
         }
     }

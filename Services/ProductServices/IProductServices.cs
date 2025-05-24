@@ -17,11 +17,13 @@ namespace Services.ProductServices
     {
         public Task<List<ProductListing>> GetAllProductAsync();
 
-        public Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, List<IFormFile> Images);
+        public Task<List<string>> SearchProductAsync(string ProductName);
+
+        public Task<ResultServices> AddProductAsync(ProductListing product, string categoryID, IFormFile MainImage, List<IFormFile> Images);
 
         public Task<ResultServices> DeleteProductAsync(string Id);
 
-        public Task<ResultServices> UpdateProductAsync(ProductListing product, List<IFormFile>? Images, List<string>? IdImagesDeltetd);
+        public Task<ResultServices> UpdateProductAsync(ProductListing product, IFormFile? MainImage, List<IFormFile>? Images, List<string>? IdImagesDeltetd);
 
         public Task<ProductListing> GetProductByID(string Id);
 

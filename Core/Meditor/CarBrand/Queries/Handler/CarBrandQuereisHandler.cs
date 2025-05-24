@@ -14,7 +14,8 @@ using System.Threading.Tasks;
 namespace Core.Meditor.CarBrand.Queries.Handler
 {
     public class CarBrandQuereisHandler : ResponseHandler,
-        IRequestHandler<GetCarBrandsModelWithPagtionation, PaginationResult<GetCarBrandResponse>>
+        IRequestHandler<GetCarBrandsModelWithPagtionation, PaginationResult<GetCarBrandResponse>>,
+        IRequestHandler<GetCarBrandByIdModel, Response<GetCarBrandByIdResponse>>
     {
         private readonly ICarBrandServices carBrandServices;
 
@@ -35,6 +36,13 @@ namespace Core.Meditor.CarBrand.Queries.Handler
             };
 
             return paginationList;
+        }
+
+        public async Task<Response<GetCarBrandByIdResponse>> Handle(GetCarBrandByIdModel request, CancellationToken cancellationToken)
+        {
+            return await carBrandServices.GetCarBrandById(request.Id) is { } carBrand
+                ? Success(new GetCarBrandByIdResponse(carBrand))
+                : NotFound<GetCarBrandByIdResponse>($"Not Found Car Brand With Id: {request.Id}");
         }
     }
 }

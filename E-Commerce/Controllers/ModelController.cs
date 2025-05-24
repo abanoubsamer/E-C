@@ -2,7 +2,9 @@
 using Core.Meditor.Model.Queires.Models;
 using Couerses.Basic;
 using Domain.MetaData;
+using Domain.Models;
 using Infrastructure.Data.AppDbContext;
+using Infrastructure.UnitOfWork;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

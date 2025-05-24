@@ -20,6 +20,7 @@ namespace Core.Meditor.Product.Queries.Handling
         IRequestHandler<GetProductListModelQueries, Response<List<GetProductListResponseQueries>>>,
         IRequestHandler<GetProductByIdModelQueries, Response<GetProductByIdResponsesQueries>>,
         IRequestHandler<GetProductPagination, PaginationResult<GetProducPaginationResponse>>,
+        IRequestHandler<AutoCompleteSearchProductModel, Response<List<string>>>,
         IRequestHandler<GetProductMasterModel, Response<List<ProductMasterDto>>>
     {
         #region Filads
@@ -80,6 +81,14 @@ namespace Core.Meditor.Product.Queries.Handling
             var prod = await _productServices.GetMasterProduct(request.SKU);
             if (prod == null) return NotFound<List<ProductMasterDto>>("Not Found");
             return Success(prod);
+        }
+
+        public async Task<Response<List<string>>> Handle(AutoCompleteSearchProductModel request, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(request.SearchText)) return NotFound<List<string>>("Not Found");
+            if (request.SearchText.Length < 3) return BadRequest<List<string>>("Search Text Must Be At Least 3 Characters");
+            var products = await _productServices.SearchProductAsync(request.SearchText);
+            return Success(products);
         }
 
         #endregion Handling

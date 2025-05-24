@@ -12,26 +12,25 @@ namespace Infrastructure.GenaricRepo
 {
     public class GenaricRepository<T> : IGenaricRepository<T> where T : class
     {
-
-
         #region Fildes
+
         private readonly DbSet<T> _dbSet;
         private readonly AppDbContext _db;
 
-        #endregion
-
+        #endregion Fildes
 
         #region Constractor
+
         public GenaricRepository(AppDbContext db)
         {
             _db = db;
             _dbSet = _db.Set<T>();
         }
-        #endregion
 
-
+        #endregion Constractor
 
         #region Implemntation
+
         public async Task AddAsync(T item)
         {
             await _dbSet.AddAsync(item);
@@ -49,10 +48,11 @@ namespace Infrastructure.GenaricRepo
             _dbSet.Remove(item);
             await _db.SaveChangesAsync();
         }
+
         public async Task DeleteRangeAsync(IEnumerable<T> entities)
         {
-                _dbSet.RemoveRange(entities); 
-                await _db.SaveChangesAsync();
+            _dbSet.RemoveRange(entities);
+            await _db.SaveChangesAsync();
         }
 
         public async Task<List<T>> FindMoreAsNoTrackingAsync(Expression<Func<T, bool>> Match)
@@ -92,13 +92,18 @@ namespace Infrastructure.GenaricRepo
             return await _dbSet.AnyAsync(Match);
         }
 
+        public Task UpateRangeAsync(List<T> items)
+        {
+            _dbSet.UpdateRange(items);
+            return _db.SaveChangesAsync();
+        }
+
         public async Task UpdateAsync(T item)
         {
             _dbSet.Update(item);
             await _db.SaveChangesAsync();
         }
-        #endregion
 
-
+        #endregion Implemntation
     }
 }

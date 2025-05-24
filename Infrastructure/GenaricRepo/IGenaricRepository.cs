@@ -13,6 +13,7 @@ namespace Infrastructure.GenaricRepo
         public Task AddAsync(T item);
         public Task AddRangeAsync(List<T> items);
         public Task UpdateAsync(T item);
+        public Task UpateRangeAsync(List<T> items);
         public Task DeleteAsync(T item);
         public Task DeleteRangeAsync(IEnumerable<T> entities);
         public Task<T>  FindOneAsync(Expression<Func<T,bool>> march);
