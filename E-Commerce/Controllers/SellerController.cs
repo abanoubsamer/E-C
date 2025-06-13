@@ -32,7 +32,7 @@ namespace E_Commerce.Controllers
 
         [HttpGet]
         [Route(Routing.Seller.GetSellerProductById)]
-        public async Task<IActionResult> GetSelleGetSellerProductByIdrsById(string Id)
+        public async Task<IActionResult> GetSellerProductByIdrsById(string Id)
         {
             return Ok(await _Mediator.Send(new GetsellerProductByIdModel(Id)));
         }
