@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.Dtos;
 using Domain.Dtos.Product.Queries;
 using Domain.Models;
 using Hangfire;
@@ -17,6 +18,8 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using static Domain.MetaData.Routing;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Services.ProductServices
 {
@@ -231,50 +234,56 @@ namespace Services.ProductServices
 
         public IQueryable<GetProducPaginationResponse> FilterStudent(string? ProductName, string? BrandId, string? ModelId, string? CategoryId, OrederBy? orederBy, ProductOredringEnum? productOredringEnum)
         {
-            var Query = GetQueryable();
+            var Query = GetQueryable(BrandId, ModelId, CategoryId);
 
             if (ProductName != null && ProductName != string.Empty)
             {
                 Query = Query.Where(x => x.Name.Contains(ProductName));
             }
-            if (CategoryId != null && CategoryId != string.Empty)
-            {
-                Query = Query.Where(x => x.Category.Id.Contains(CategoryId));
-            }
-            if (BrandId != null && BrandId != string.Empty)
-            {
-                Query = Query.Where(x => x.BrandCompatibility.Any(b => b == BrandId));
-            }
-            if (ModelId != null && ModelId != string.Empty)
-            {
-                Query = Query.Where(x => x.ModelCompatibility.Any(m => m == ModelId));
-            }
 
             return OrderBy(Query, orederBy, productOredringEnum);
         }
 
-        private IQueryable<GetProducPaginationResponse> GetQueryable()
+        private IQueryable<GetProducPaginationResponse> GetQueryable(string? BrandId, string? ModelId, string? CategoryId)
         {
-            return _unitOfWork.Repository<ProductListing>()
-             .GetQueryable().AsNoTracking().AsSplitQuery()
-             .Select(x => new GetProducPaginationResponse
-             {
-                 AverageRating = x.Reviews.Select(r => (double?)r.Rating).Average() ?? 0,
-                 Description = x.Description,
-                 Category = new Domain.Dtos.CategoryDto { Name = x.Product.Category.Name, Id = x.Product.CategoryID },
-                 Name = x.Name,
-                 Price = x.Price,
-                 ProductID = x.ProductID,
-                 StockQuantity = x.StockQuantity,
-                 Seller = new Domain.Dtos.SellerDto { id = x.SellerID, name = x.Seller.User.Name },
-                 Images = x.Images.Select(x => new Domain.Dtos.ProductImagesDto
-                 {
-                     id = x.ImageID,
-                     Image = x.ImageUrl
-                 }).ToList(),
-                 ModelCompatibility = x.Product.Compatibilities.Select(x => x.ModelId).ToList(),
-                 BrandCompatibility = x.Product.Compatibilities.Select(x => x.Model.BrandId).Distinct().ToList()
-             });
+            var query = _unitOfWork.Repository<ProductListing>()
+                .GetQueryable()
+                .AsNoTracking()
+                .AsSplitQuery();
+
+            if (!string.IsNullOrEmpty(ModelId))
+            {
+                query = query.Where(x => x.Product.Compatibilities.Any(c => c.ModelId == ModelId));
+            }
+
+            if (!string.IsNullOrEmpty(BrandId))
+            {
+                query = query.Where(x => x.Product.Compatibilities.Any(c => c.Model.BrandId == BrandId));
+            }
+
+            if (!string.IsNullOrEmpty(CategoryId))
+            {
+                query = query.Where(x => x.Product.CategoryID == CategoryId);
+            }
+
+            return query.Select(x => new GetProducPaginationResponse
+            {
+                AverageRating = x.Reviews.Any() ? x.Reviews.Average(r => (double?)r.Rating) ?? 0 : 0,
+                Description = x.Description,
+                Name = x.Name,
+                Price = x.Price,
+                ProductID = x.ProductID,
+                StockQuantity = x.StockQuantity,
+                Seller = new Domain.Dtos.SellerDto
+                {
+                    id = x.SellerID,
+                    name = x.Seller.User.Name
+                },
+                Images = x.Images
+                    .OrderByDescending(x => x.ImageUrl.StartsWith("main_"))
+                    .Select(x => x.ImageUrl)
+                    .FirstOrDefault()
+            });
         }
 
         private IQueryable<GetProducPaginationResponse> OrderBy(IQueryable<GetProducPaginationResponse> Query, OrederBy? orederBy, ProductOredringEnum? productOredringEnum)

@@ -24,14 +24,6 @@ namespace Domain.Dtos.Product.Queries
 
         public SellerDto Seller { get; set; }
 
-        public CategoryDto Category { get; set; }
-
-        public List<ProductImagesDto> Images { get; set; }
-
-        [JsonIgnore]
-        public List<string> ModelCompatibility { get; set; }
-
-        [JsonIgnore]
-        public List<string> BrandCompatibility { get; set; }
+        public string Images { get; set; }
     }
 }

@@ -8,6 +8,7 @@ using System.Reflection.Emit;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Dtos.Product.Queries;
 
 namespace Infrastructure.Data.AppDbContext
 {
@@ -20,6 +21,7 @@ namespace Infrastructure.Data.AppDbContext
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
 
